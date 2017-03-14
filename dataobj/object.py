@@ -104,8 +104,13 @@ class DataObject(metaclass=DataObjectMetaclass):
         :return: True/False
         """
         try:
+            if self.__check_existence():
+                logger.error('Exist object: {}'.format(self))
+                return self.update()
+
             sql = SQLBuilder(self.__table__,
-                             insert={f.db_column: self.__get_value_or_default(f.name) for f in self.__fields__}).sql
+                             insert=self.__as_db_dict()).sql
+
             setattr(self, self.__primary_key__.name, self._execute(sql))
             return True
         except Exception as err:
@@ -152,7 +157,7 @@ class DataObject(metaclass=DataObjectMetaclass):
 
             cond = {self.__primary_key__.db_column: self.__get_value_or_default(self.__primary_key__.name)}
             sql = SQLBuilder(self.__table__,
-                             update={f.db_column: self.__get_value_or_default(f.name) for f in self.__fields__},
+                             update=self.__as_db_dict(),
                              where=cond).sql
             setattr(self, self.__primary_key__.name, self._execute(sql))
             return True
@@ -208,6 +213,21 @@ class DataObject(metaclass=DataObjectMetaclass):
             logger.error(err, exc_info=DEBUG)
             return None
 
+    def __as_db_dict(self):
+        return {f.db_column: self.__get_value_or_default(f.name) for f in self.__fields__}
+
+    def __check_existence(self):
+        pk = getattr(self, self.__primary_key__.name, None)
+
+        try:
+            v = int(pk)
+            if v <= 0:
+                return False
+
+            return self.load(v) is not None
+        except:
+            pass
+
     @classmethod
     def __format_db_data(cls, data):
         d = dict()
@@ -220,10 +240,12 @@ class DataObject(metaclass=DataObjectMetaclass):
     def __get_value_or_default(self, key):
         field = self.__mappings__.get(key)
         value = getattr(self, field.name, None)
-        if value:
-            return field.db_format(value)
-        else:
-            return field.db_format(field.default_value)
+
+        if value is None:
+            value = field.default_value
+            setattr(self, key, value)
+
+        return field.db_format(value)
 
     @staticmethod
     def _execute(sql):

@@ -42,7 +42,7 @@ class Field(object):
             assert isinstance(value, self.type)
             return self._db_format(value)
         except:
-            raise FieldFormatError('Expected type `{}`, not `{}`: {}'.format(self.type, type(value), va))
+            raise FieldFormatError('Expected type `{}`, not `{}`: {}'.format(self.type, type(value), value))
 
     def output_format(self, value):
         return self._output_format(value)

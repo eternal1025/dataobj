@@ -26,7 +26,8 @@ class FolderDataObject(DataObject):
     name = StrField(default='新建文件夹')
     icon_url = StrField(default='default.png')
     create_at = DatetimeField(default=datetime.datetime.now)
-    is_sub_folder = BoolField(db_column='is_sub', default=True)
+
+    # is_sub_folder = BoolField(db_column='is_sub', default=True)
 
     @staticmethod
     def _query(sql):
@@ -40,11 +41,13 @@ class FolderDataObject(DataObject):
 
 
 if __name__ == '__main__':
-    # f = FolderDataObject.load(19)
-    # print(f)
+    f = FolderDataObject.load(24)
+    print(f)
+    f.save()
     #
     # # f.delete()
     # for f in FolderDataObject.filter(name='兴趣'):
     #     print(f)
-    f = FolderDataObject(name='测试文件夹')
-    f.save()
+    # f = FolderDataObject(name='新建文件夹')
+    # f.save()
+    # print(f)
