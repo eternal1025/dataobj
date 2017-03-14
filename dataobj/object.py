@@ -22,8 +22,8 @@ DEBUG = False
 
 class DataObjectMetaclass(type):
     """
-    Metaclass scanner,
-    it scans the DataObject fields and generate corresponding SQLs.
+    Metaclass scanner:
+        it scans the DataObject fields, and collect them into special attributes.
     """
 
     def __new__(mcs, name, bases, attributes):
