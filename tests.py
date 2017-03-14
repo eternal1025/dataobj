@@ -44,6 +44,7 @@ if __name__ == '__main__':
     f = FolderDataObject.load(24)
     print(f)
     f.save()
+
     #
     # # f.delete()
     # for f in FolderDataObject.filter(name='兴趣'):

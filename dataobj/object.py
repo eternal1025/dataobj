@@ -105,7 +105,7 @@ class DataObject(metaclass=DataObjectMetaclass):
         """
         try:
             if self.__check_existence():
-                logger.error('Exist object: {}'.format(self))
+                logger.warning('Data object `{}` already exists'.format(self))
                 return self.update()
 
             sql = SQLBuilder(self.__table__,
