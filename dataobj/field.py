@@ -39,10 +39,14 @@ class Field(object):
 
     def db_format(self, value):
         try:
+            if value is None:
+                return value
+
             assert isinstance(value, self.type)
             return self._db_format(value)
         except:
-            raise FieldFormatError('Expected type `{}`, not `{}`: {}'.format(self.type, type(value), value))
+            raise FieldFormatError(
+                'Column `{}` expected type `{}`, not `{}`: {}'.format(self.db_column, self.type, type(value), value))
 
     def output_format(self, value):
         return self._output_format(value)

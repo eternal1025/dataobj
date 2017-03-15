@@ -17,7 +17,7 @@ __author__ = 'Chris'
 
 logger = logging.getLogger(__name__)
 
-DEBUG = False
+DEBUG = True
 
 
 class DataObjectMetaclass(type):
@@ -88,8 +88,16 @@ class DataObjectMetaclass(type):
 
 class DataObject(metaclass=DataObjectMetaclass):
     def __init__(self, **kwargs):
+        fields = list(self.__mappings__.keys())
+
+        # Set attribute from arguments
         for k, v in kwargs.items():
             setattr(self, k, v)
+            fields.remove(k)
+
+        # Otherwise, set attribute with default value
+        for f in fields:
+            setattr(self, f, self.__get_value_or_default(f, False))
 
     def __repr__(self):
         return '<{} {}>'.format(
@@ -97,17 +105,13 @@ class DataObject(metaclass=DataObjectMetaclass):
             ', '.join(['{}={}'.format(key, getattr(self, key, None)) for key in self.__mappings__])
         )
 
-    def save(self):
+    def dump(self):
         """
-        Save object to database
+        Insert object to the database
 
         :return: True/False
         """
         try:
-            if self.__check_existence():
-                logger.warning('Data object `{}` already exists'.format(self))
-                return self.update()
-
             sql = SQLBuilder(self.__table__,
                              insert=self.__as_db_dict()).sql
 
@@ -120,23 +124,13 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def load(cls, primary_key_value):
         """
-        Load object from database
+        Load object from the database
 
         :param primary_key_value: Value of the primary key
         :return:
         """
         try:
-            sql = SQLBuilder(cls.__table__, select=[f.db_column for f in cls.__mappings__.values()],
-                             where={cls.__primary_key__.db_column: primary_key_value}).sql
-            result = cls._query(sql)
-
-            data = None
-            if isinstance(result, dict):
-                data = result
-            elif isinstance(result, list):
-                data = result[0]
-
-            return cls(**cls.__format_db_data(data))
+            return list(cls.filter(**{cls.__primary_key__.db_column: primary_key_value}))[-1]
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
             return None
@@ -149,8 +143,10 @@ class DataObject(metaclass=DataObjectMetaclass):
         :return: True/False
         """
         try:
+            field_names = [f.name for f in self.__fields__]
+
             for k, v in kwargs.items():
-                if k not in self.__mappings__:
+                if k not in field_names:
                     continue
 
                 setattr(self, k, v)
@@ -159,7 +155,7 @@ class DataObject(metaclass=DataObjectMetaclass):
             sql = SQLBuilder(self.__table__,
                              update=self.__as_db_dict(),
                              where=cond).sql
-            setattr(self, self.__primary_key__.name, self._execute(sql))
+            self._execute(sql)
             return True
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
@@ -200,44 +196,26 @@ class DataObject(metaclass=DataObjectMetaclass):
 
     @classmethod
     def all(cls):
-        try:
-            sql = SQLBuilder(cls.__table__, select='*').sql
-
-            for row in cls._query(sql):
-                try:
-                    yield cls(**cls.__format_db_data(row))
-                except Exception as err:
-                    logger.error(err, exc_info=DEBUG)
-                    continue
-        except Exception as err:
-            logger.error(err, exc_info=DEBUG)
-            return None
+        yield from cls.filter()
 
     def __as_db_dict(self):
         return {f.db_column: self.__get_value_or_default(f.name) for f in self.__fields__}
-
-    def __check_existence(self):
-        pk = getattr(self, self.__primary_key__.name, None)
-
-        try:
-            v = int(pk)
-            if v <= 0:
-                return False
-
-            return self.load(v) is not None
-        except:
-            pass
 
     @classmethod
     def __format_db_data(cls, data):
         d = dict()
         for k, v in data.items():
             f = cls.__db_mappings__.get(k)
+
+            if f is None:
+                logger.warning('Mismatched field `{}` with value `{}`'.format(k, v))
+                continue
+
             d[f.name] = f.output_format(v)
 
         return d
 
-    def __get_value_or_default(self, key):
+    def __get_value_or_default(self, key, format_=True):
         field = self.__mappings__.get(key)
         value = getattr(self, field.name, None)
 
@@ -245,7 +223,7 @@ class DataObject(metaclass=DataObjectMetaclass):
             value = field.default_value
             setattr(self, key, value)
 
-        return field.db_format(value)
+        return field.db_format(value) if format_ else value
 
     @staticmethod
     def _execute(sql):

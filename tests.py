@@ -41,14 +41,33 @@ class FolderDataObject(DataObject):
 
 
 if __name__ == '__main__':
-    f = FolderDataObject.load(24)
-    print(f)
-    f.save()
-
+    # Create a new object
+    # folder = FolderDataObject()
+    # folder.name = '新建测试文件夹-2017'
+    # print(folder)
     #
-    # # f.delete()
-    # for f in FolderDataObject.filter(name='兴趣'):
-    #     print(f)
-    # f = FolderDataObject(name='新建文件夹')
-    # f.save()
-    # print(f)
+    # folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
+    # print(folder_2)
+    #
+    # # Save folder object
+    # folder_2.dump()
+    # print(folder_2)
+
+    # Load a folder object from database
+    # folder = FolderDataObject.load(22)
+    # print(folder)
+
+    # Rename folder
+    # folder.name = '新建文件夹-改名'
+    # print(folder)
+
+    # Sync it to db
+    # folder.update()
+    # print(folder)
+
+    # Delete a folder
+    # folder.delete()
+
+    # Filter
+    for f in FolderDataObject.all():
+        print(f)

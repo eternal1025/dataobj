@@ -25,3 +25,7 @@ class DuplicatePrimaryKeyError(Exception):
 
 class PrimaryKeyNotFoundError(Exception):
     pass
+
+
+class UnknownColumnError(Exception):
+    pass
