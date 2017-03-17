@@ -181,15 +181,15 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def filter(cls, **where):
         try:
+
             sql = SQLBuilder(cls.__table__, select='*',
-                             where={cls.__mappings__.get(k).db_column: v for k, v in where.items()}).sql
+                             where=cls.__safe_conditions(**where)).sql
             for row in cls._query(sql):
                 try:
                     yield cls(**cls.__format_db_data(row))
                 except Exception as err:
                     logger.error(err, exc_info=DEBUG)
                     continue
-
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
             return None
@@ -197,6 +197,19 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def all(cls):
         yield from cls.filter()
+
+    @classmethod
+    def __safe_conditions(cls, **where):
+        # replace query condition keys with the real ones
+        conditions = {}
+        for k, v in where.items():
+            f = cls.__mappings__.get(k)
+            if f is None:
+                raise AttributeError('Field `{}` is not defined in class `{}`'.format(k, cls.__name__))
+
+            conditions[f.db_column] = v
+
+        return conditions
 
     def __as_db_dict(self):
         return {f.db_column: self.__get_value_or_default(f.name) for f in self.__fields__}
