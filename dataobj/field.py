@@ -7,6 +7,7 @@
 # Description: description of this file.
 
 import datetime
+from decimal import Decimal
 
 from dataobj.exception import FieldFormatError
 
@@ -105,6 +106,13 @@ class BoolField(Field):
 
 class FloatField(Field):
     type = float
+
+    def _db_format(self, value):
+        return '{}'.format(value)
+
+
+class DecimalField(Field):
+    type = Decimal
 
     def _db_format(self, value):
         return '{}'.format(value)

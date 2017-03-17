@@ -17,7 +17,7 @@ __author__ = 'Chris'
 
 logger = logging.getLogger(__name__)
 
-DEBUG = True
+DEBUG = False
 
 
 class DataObjectMetaclass(type):
@@ -130,7 +130,7 @@ class DataObject(metaclass=DataObjectMetaclass):
         :return:
         """
         try:
-            return list(cls.filter(**{cls.__primary_key__.db_column: primary_key_value}))[-1]
+            return list(cls.filter(**{cls.__primary_key__.name: primary_key_value}))[-1]
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
             return None

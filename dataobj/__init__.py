@@ -7,12 +7,13 @@
 # Description: description of this file.
 
 from dataobj.field import (IntField,
-                               StrField,
-                               DatetimeField,
-                               DateField,
-                               TimeField,
-                               BoolField,
-                               FloatField,
-                               Field)
+                           StrField,
+                           DatetimeField,
+                           DateField,
+                           TimeField,
+                           BoolField,
+                           FloatField,
+                           Field,
+                           DecimalField)
 
 from dataobj.object import DataObject
