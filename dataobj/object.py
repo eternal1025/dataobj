@@ -105,6 +105,15 @@ class DataObject(metaclass=DataObjectMetaclass):
             ', '.join(['{}={}'.format(key, getattr(self, key, None)) for key in self.__mappings__])
         )
 
+    def save(self):
+        """
+        Alias to `meth`: `dump`.
+
+        Remember that this method will add a new record to database.
+        :return:
+        """
+        return self.dump()
+
     def dump(self):
         """
         Insert object to the database
