@@ -7,6 +7,7 @@
 # Description: description of this file.
 
 import datetime
+from pymysql.converters import (escape_float, escape_int, escape_bool, escape_datetime, escape_date, escape_str)
 from decimal import Decimal
 
 from dataobj.exception import FieldFormatError
@@ -44,7 +45,7 @@ class Field(object):
                 return value
 
             assert isinstance(value, self.type)
-            return self._db_format(value)
+            return self._db_format(value).replace('\'', '')
         except:
             raise FieldFormatError(
                 'Column `{}` expected type `{}`, not `{}`: {}'.format(self.db_column, self.type, type(value), value))
@@ -63,42 +64,42 @@ class IntField(Field):
     type = int
 
     def _db_format(self, value):
-        return '{}'.format(int(value))
+        return escape_int(value)
 
 
 class StrField(Field):
     type = str
 
     def _db_format(self, value):
-        return '{}'.format(value)
+        return escape_str(value)
 
 
 class DatetimeField(Field):
     type = datetime.datetime
 
     def _db_format(self, value):
-        return '{}'.format(value.isoformat())
+        return escape_datetime(value)
 
 
 class DateField(Field):
     type = datetime.date
 
     def _db_format(self, value):
-        return '{}'.format(value.isoformat())
+        return escape_date(value)
 
 
 class TimeField(Field):
     type = datetime.time
 
     def _db_format(self, value):
-        return '{}'.format(value.isoformat())
+        return escape_datetime(value)
 
 
 class BoolField(Field):
     type = bool
 
     def _db_format(self, value):
-        return 1 if value is True else 0
+        return escape_bool(value)
 
     def _output_format(self, value):
         return bool(value)
@@ -108,7 +109,7 @@ class FloatField(Field):
     type = float
 
     def _db_format(self, value):
-        return '{}'.format(value)
+        return escape_float(value)
 
 
 class DecimalField(Field):

@@ -8,5 +8,5 @@ setup(
     license='Apache',
     author='Chris',
     author_email='limeng@moviewisdom.cn',
-    description='Simple ORM'
+    description='Simple ORM', requires=['pymysql']
 )
