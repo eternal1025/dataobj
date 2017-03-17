@@ -182,7 +182,7 @@ class DataObject(metaclass=DataObjectMetaclass):
     def filter(cls, **where):
         try:
             sql = SQLBuilder(cls.__table__, select='*',
-                             where=where).sql
+                             where={cls.__mappings__.get(k).db_column: v for k, v in where.items()}).sql
             for row in cls._query(sql):
                 try:
                     yield cls(**cls.__format_db_data(row))
@@ -208,7 +208,7 @@ class DataObject(metaclass=DataObjectMetaclass):
             f = cls.__db_mappings__.get(k)
 
             if f is None:
-                logger.warning('Mismatched field `{}` with value `{}`'.format(k, v))
+                logger.warning('Missing field `{}` with value `{}`'.format(k, v))
                 continue
 
             d[f.name] = f.output_format(v)
@@ -227,11 +227,11 @@ class DataObject(metaclass=DataObjectMetaclass):
 
     @staticmethod
     def _execute(sql):
-        raise NotImplementedError
+        logger.warning('Try to execute sql: {}'.format(sql))
 
     @staticmethod
     def _query(sql):
-        raise NotImplementedError
+        logger.warning('Try to execute sql: {}'.format(sql))
 
 
 __all__ = ['DataObject']

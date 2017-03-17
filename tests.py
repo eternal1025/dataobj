@@ -42,16 +42,16 @@ class FolderDataObject(DataObject):
 
 if __name__ == '__main__':
     # Create a new object
-    # folder = FolderDataObject()
-    # folder.name = '新建测试文件夹-2017'
-    # print(folder)
+    folder = FolderDataObject()
+    folder.name = '新建测试文件夹-2017'
+    print(folder)
     #
-    # folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
-    # print(folder_2)
+    folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
+    print(folder_2)
     #
     # # Save folder object
-    # folder_2.dump()
-    # print(folder_2)
+    folder_2.dump()
+    print(folder_2)
 
     # Load a folder object from database
     # folder = FolderDataObject.load(22)
@@ -69,5 +69,5 @@ if __name__ == '__main__':
     # folder.delete()
 
     # Filter
-    for f in FolderDataObject.all():
-        print(f)
+    # for f in FolderDataObject.all():
+    #     print(f)
