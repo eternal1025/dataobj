@@ -9,7 +9,7 @@
 import logging
 import datetime
 from db_util import mysql_query, mysql_execute
-from dataobj import DataObject, IntField, StrField, DatetimeField, BoolField
+from dataobj import DataObject, IntField, StrField, DatetimeField, PickleField
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
@@ -23,7 +23,7 @@ class FolderDataObject(DataObject):
     __table__ = 'folder'
 
     folder_id = IntField(db_column='id', primary_key=True)
-    name = StrField(default='新建文件夹')
+    name = PickleField(default='新建文件夹')
     icon_url = StrField(default='default.png')
     create_at = DatetimeField(default=datetime.datetime.now)
 
@@ -43,15 +43,18 @@ class FolderDataObject(DataObject):
 if __name__ == '__main__':
     # Create a new object
     folder = FolderDataObject()
-    folder.name = '新建测试文件夹-2017'
-    print(folder)
-    #
-    folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
-    print(folder_2)
-    #
-    # # Save folder object
-    folder_2.dump()
-    print(folder_2)
+    folder.name = folder
+    print(folder.dump())
+    # print(folder)
+    # print(folder)
+    # #
+    # folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
+    # print(folder_2)
+    # #
+    # # # Save folder object
+    # folder_2.dump()
+    # print(folder_2)
+    # print(FolderDataObject.load(7))
 
     # Load a folder object from database
     # folder = FolderDataObject.load(22)

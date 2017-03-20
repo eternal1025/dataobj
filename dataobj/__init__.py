@@ -14,6 +14,10 @@ from dataobj.field import (IntField,
                            BoolField,
                            FloatField,
                            Field,
-                           DecimalField)
+                           DecimalField,
+                           ListField,
+                           DictField,
+                           SetField,
+                           PickleField)
 
 from dataobj.object import DataObject

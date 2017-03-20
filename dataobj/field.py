@@ -7,10 +7,13 @@
 # Description: description of this file.
 
 import datetime
-from pymysql.converters import (escape_float, escape_int, escape_bool, escape_datetime, escape_date, escape_str)
-from decimal import Decimal
+import json
 
 from dataobj.exception import FieldFormatError
+from pymysql.converters import (escape_float, escape_int, escape_bool,
+                                escape_datetime, escape_date,
+                                escape_str)
+from decimal import Decimal
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
@@ -44,9 +47,8 @@ class Field(object):
             if value is None:
                 return value
 
-            assert isinstance(value, self.type)
             return self._db_format(value).replace('\'', '')
-        except:
+        except Exception:
             raise FieldFormatError(
                 'Column `{}` expected type `{}`, not `{}`: {}'.format(self.db_column, self.type, type(value), value))
 
@@ -113,13 +115,80 @@ class FloatField(Field):
 
 
 class DecimalField(Field):
-    type = Decimal
+    type = (Decimal, int, float)
 
     def _db_format(self, value):
         return '{}'.format(value)
 
 
+class _BasicCollectionField(Field):
+    def _db_format(self, value):
+        try:
+            return escape_str(json.dumps(value))
+        except:
+            return value
+
+    def _output_format(self, value):
+        try:
+            return json.loads(value)
+        except:
+            return value
+
+
+class ListField(_BasicCollectionField):
+    type = list
+
+
+class DictField(_BasicCollectionField):
+    type = dict
+
+
+class SetField(_BasicCollectionField):
+    type = set
+
+
+class PickleField(Field):
+    type = object
+
+    def _db_format(self, value):
+        s = self.__encode(value)
+        return s
+
+    def _output_format(self, value):
+        return self.__decode(value)
+
+    @staticmethod
+    def __encode(value):
+        import base64
+        import pickle
+
+        try:
+            return (base64.encodebytes(pickle.dumps(value)).decode()).strip()
+        except pickle.PicklingError:
+            pass
+
+    @staticmethod
+    def __decode(value):
+        import base64
+        import pickle
+
+        if value is None:
+            return None
+
+        try:
+            return pickle.loads(base64.decodebytes(value.strip().encode()))
+        except pickle.PicklingError:
+            pass
+
+
 if __name__ == '__main__':
-    f = BoolField()
-    print(f.db_format(False))
-    # print(f.output_format(100))
+    class Person(object):
+        def __init__(self, name, id, desc):
+            self.name = name
+            self.id = id
+            self.desc = desc
+
+
+    p = Person('chris', 10, 'desc')
+    f = PickleField()
+    print(f.db_format(p))

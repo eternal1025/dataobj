@@ -105,6 +105,13 @@ class DataObject(metaclass=DataObjectMetaclass):
             ', '.join(['{}={}'.format(key, getattr(self, key, None)) for key in self.__mappings__])
         )
 
+    def __str__(self):
+        return ', '.join(['{}={}'.format(key, getattr(self, key, None)) for key in self.__mappings__])
+
+    @property
+    def dict_data(self):
+        return {k: getattr(self, k, None) for k in self.__mappings__}
+
     def save(self):
         """
         Alias to `meth`: `dump`.
