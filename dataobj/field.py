@@ -12,7 +12,7 @@ import json
 from dataobj.exception import FieldFormatError
 from pymysql.converters import (escape_float, escape_int, escape_bool,
                                 escape_datetime, escape_date,
-                                escape_str)
+                                escape_str, escape_time)
 from decimal import Decimal
 
 __version__ = '0.0.1'
@@ -25,15 +25,15 @@ class Field(object):
     def __init__(self, db_column=None, default=None, primary_key=False):
         self.name = None
         self._db_column = db_column
-        self._default = default
+        self.default = default
         self.primary_key = primary_key
 
     @property
     def default_value(self):
         try:
-            return self._default()
+            return self.default()
         except:
-            return self._default
+            return self.default
 
     @property
     def db_column(self):
@@ -47,10 +47,14 @@ class Field(object):
             if value is None:
                 return value
 
+            if isinstance(value, self.type) is False:
+                raise FieldFormatError(
+                    'Column `{}` expected type `{}`, not `{}`: {}'.format(self.db_column, self.type, type(value),
+                                                                          value))
+
             return self._db_format(value).replace('\'', '')
         except Exception:
-            raise FieldFormatError(
-                'Column `{}` expected type `{}`, not `{}`: {}'.format(self.db_column, self.type, type(value), value))
+            raise
 
     def output_format(self, value):
         return self._output_format(value)
@@ -63,7 +67,7 @@ class Field(object):
 
 
 class IntField(Field):
-    type = int
+    type = (int, float)
 
     def _db_format(self, value):
         return escape_int(value)
@@ -84,17 +88,17 @@ class DatetimeField(Field):
 
 
 class DateField(Field):
-    type = datetime.date
+    type = (datetime.date, datetime.datetime)
 
     def _db_format(self, value):
         return escape_date(value)
 
 
 class TimeField(Field):
-    type = datetime.time
+    type = (datetime.datetime, datetime.time)
 
     def _db_format(self, value):
-        return escape_datetime(value)
+        return escape_time(value)
 
 
 class BoolField(Field):
@@ -182,13 +186,9 @@ class PickleField(Field):
 
 
 if __name__ == '__main__':
-    class Person(object):
-        def __init__(self, name, id, desc):
-            self.name = name
-            self.id = id
-            self.desc = desc
+    from datetime import datetime
 
-
-    p = Person('chris', 10, 'desc')
-    f = PickleField()
-    print(f.db_format(p))
+    d = FloatField()
+    # d = DatetimeField()
+    o = d.db_format(2.336)
+    print(o)

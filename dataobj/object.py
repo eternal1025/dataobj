@@ -77,7 +77,7 @@ class DataObjectMetaclass(type):
         # Find table name
         table = attributes.get('__table__', None)
         if table is None:
-            raise TableNotDefinedError('{} missing attribute `__table__`, you must defined it first'.format(name))
+            raise TableNotDefinedError('{} missing attribute `__table__`, you must define it first'.format(name))
         elif not isinstance(table, str):
             raise TypeError('`str` type expected for `__table__` attribute, not `{}`'.format(type(table)))
         elif table == '':
@@ -93,7 +93,10 @@ class DataObject(metaclass=DataObjectMetaclass):
         # Set attribute from arguments
         for k, v in kwargs.items():
             setattr(self, k, v)
-            fields.remove(k)
+            if k in fields:
+                fields.remove(k)
+            else:
+                logger.error('Unknown field {}'.format(k))
 
         # Otherwise, set attribute with default value
         for f in fields:
