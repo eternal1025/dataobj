@@ -112,6 +112,10 @@ class DataObject(metaclass=DataObjectMetaclass):
     def dict_data(self):
         return {k: getattr(self, k, None) for k in self.__mappings__}
 
+    @classmethod
+    def has_field(cls, field_name):
+        return field_name in cls.__mappings__
+
     def save(self):
         """
         Alias to `meth`: `dump`.
