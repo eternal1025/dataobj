@@ -31,6 +31,10 @@ class DataObjectMetaclass(type):
         if name == 'DataObject':
             return type.__new__(mcs, name, bases, attributes)
 
+        # Ignore `base data object`
+        if attributes.get('__base_class__', False) is True:
+            return type.__new__(mcs, name, bases, attributes)
+
         table = mcs._load_table(name, attributes)
 
         fields = []
