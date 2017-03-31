@@ -35,6 +35,9 @@ class DataObjectMetaclass(type):
         if attributes.get('__base_class__', False) is True:
             return type.__new__(mcs, name, bases, attributes)
 
+        if not attributes.get('__dao_class__', None):
+            raise RuntimeError('Dao class is not defined yet')
+
         table = mcs._load_table(name, attributes)
 
         fields = []
@@ -91,6 +94,9 @@ class DataObjectMetaclass(type):
 
 
 class DataObject(metaclass=DataObjectMetaclass):
+    __table__ = None
+    __dao_class__ = None
+
     def __init__(self, **kwargs):
         fields = list(self.__mappings__.keys())
 
@@ -100,7 +106,7 @@ class DataObject(metaclass=DataObjectMetaclass):
             if k in fields:
                 fields.remove(k)
             else:
-                logger.error('Unknown field {}'.format(k))
+                logger.debug('Unknown field {}'.format(k))
 
         # Otherwise, set attribute with default value
         for f in fields:
@@ -122,15 +128,6 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def has_field(cls, field_name):
         return field_name in cls.__mappings__
-
-    def save(self):
-        """
-        Alias to `meth`: `dump`.
-
-        Remember that this method will add a new record to database.
-        :return:
-        """
-        return self.dump()
 
     def dump(self):
         """
@@ -248,7 +245,7 @@ class DataObject(metaclass=DataObjectMetaclass):
             f = cls.__db_mappings__.get(k)
 
             if f is None:
-                logger.warning('Missing field `{}` with value `{}`'.format(k, v))
+                logger.debug('Missing field `{}` with value `{}`'.format(k, v))
                 continue
 
             d[f.name] = f.output_format(v)
@@ -265,13 +262,14 @@ class DataObject(metaclass=DataObjectMetaclass):
 
         return field.db_format(value) if format_ else value
 
-    @staticmethod
-    def _execute(sql):
-        logger.warning('Try to execute sql: {}'.format(sql))
+    @classmethod
+    def _query(cls, sql):
+        logger.debug('Query SQL: {}'.format(sql))
+        return cls.__dao_class__().query(sql)
 
-    @staticmethod
-    def _query(sql):
-        logger.warning('Try to execute sql: {}'.format(sql))
+    def _execute(self, sql):
+        logger.debug('Execute SQL: {}'.format(sql))
+        return self.__dao_class__().execute(sql)
 
 
 __all__ = ['DataObject']

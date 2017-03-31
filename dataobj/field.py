@@ -72,6 +72,12 @@ class IntField(Field):
     def _db_format(self, value):
         return escape_int(value)
 
+    def _output_format(self, value):
+        try:
+            return int(value)
+        except:
+            return None
+
 
 class StrField(Field):
     type = str
@@ -85,6 +91,9 @@ class DatetimeField(Field):
 
     def _db_format(self, value):
         return escape_datetime(value)
+
+    def _output_format(self, value):
+        return value
 
 
 class DateField(Field):
@@ -112,10 +121,16 @@ class BoolField(Field):
 
 
 class FloatField(Field):
-    type = float
+    type = (float, int)
 
     def _db_format(self, value):
         return escape_float(value)
+
+    def _output_format(self, value):
+        try:
+            return float(value)
+        except:
+            return None
 
 
 class DecimalField(Field):
@@ -123,6 +138,9 @@ class DecimalField(Field):
 
     def _db_format(self, value):
         return '{}'.format(value)
+
+    def _output_format(self, value):
+        return value
 
 
 class _BasicCollectionField(Field):
