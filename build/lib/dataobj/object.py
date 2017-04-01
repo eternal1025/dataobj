@@ -206,7 +206,7 @@ class DataObject(metaclass=DataObjectMetaclass):
     def filter(cls, **where):
         try:
 
-            sql = SQLBuilder(cls.__table__, select='*',
+            sql = SQLBuilder(cls.__table__, select=cls.__db_mappings__,
                              where=cls.__safe_conditions(**where)).sql
             for row in cls._query(sql):
                 try:

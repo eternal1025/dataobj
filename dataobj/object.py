@@ -222,6 +222,16 @@ class DataObject(metaclass=DataObjectMetaclass):
     def all(cls):
         yield from cls.filter()
 
+    def count(self, field=None):
+        sql = 'SELECT COUNT({field}) AS count FROM {table}'.format(
+            field=1 if field not in self.__fields__ else field,
+            table=self.__table__
+        )
+        try:
+            return self._execute(sql)[0]['count']
+        except Exception as err:
+            logger.error(err, exc_info=DEBUG)
+
     @classmethod
     def __safe_conditions(cls, **where):
         # replace query condition keys with the real ones
