@@ -18,6 +18,6 @@ from dataobj.field import (IntField,
                            ListField,
                            DictField,
                            SetField,
-                           PickleField)
+                           BlobField)
 
 from dataobj.object import DataObject

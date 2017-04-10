@@ -12,7 +12,7 @@ import json
 from dataobj.exception import FieldFormatError
 from pymysql.converters import (escape_float, escape_int, escape_bool,
                                 escape_datetime, escape_date,
-                                escape_str, escape_time)
+                                escape_str, escape_time, escape_bytes)
 from decimal import Decimal
 
 __version__ = '0.0.1'
@@ -61,6 +61,16 @@ class Field(object):
 
     def _db_format(self, value):
         raise NotImplementedError
+
+    def _output_format(self, value):
+        return value
+
+
+class BlobField(Field):
+    type = (bytes,)
+
+    def _db_format(self, value):
+        return escape_bytes(value)
 
     def _output_format(self, value):
         return value
