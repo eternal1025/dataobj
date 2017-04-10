@@ -10,6 +10,7 @@ import logging
 from dataobj.field import Field
 from sqlbuilder import SQLBuilder
 
+from pprint import pformat
 from dataobj.exception import TableNotDefinedError, DuplicatePrimaryKeyError, PrimaryKeyNotFoundError
 
 __version__ = '0.0.1'
@@ -119,7 +120,7 @@ class DataObject(metaclass=DataObjectMetaclass):
         )
 
     def __str__(self):
-        return ', '.join(['{}={}'.format(key, getattr(self, key, None)) for key in self.__mappings__])
+        return pformat(', '.join(['{}={}'.format(key, getattr(self, key, None)) for key in self.__mappings__]))
 
     @property
     def dict_data(self):
@@ -146,6 +147,19 @@ class DataObject(metaclass=DataObjectMetaclass):
             return False
 
     @classmethod
+    def from_raw_dict(cls, **kwargs):
+        """
+        Create a new DataObject instance from given the dict
+
+        :param kwargs:
+        :return:
+        """
+        try:
+            return cls(**cls.__format_db_data(kwargs))
+        except Exception as err:
+            logger.error(err, exc_info=DEBUG)
+
+    @classmethod
     def load(cls, primary_key_value):
         """
         Load object from the database
@@ -154,7 +168,7 @@ class DataObject(metaclass=DataObjectMetaclass):
         :return:
         """
         try:
-            return list(cls.filter(**{cls.__primary_key__.name: primary_key_value}))[-1]
+            return cls.filter(**{cls.__primary_key__.name: primary_key_value})[0]
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
             return None
@@ -204,6 +218,11 @@ class DataObject(metaclass=DataObjectMetaclass):
 
     @classmethod
     def filter(cls, **where):
+        result = cls.filter_iter(**where)
+        return list(result) if result is not None else []
+
+    @classmethod
+    def filter_iter(cls, **where):
         try:
 
             sql = SQLBuilder(cls.__table__, select=cls.__db_mappings__,
@@ -220,15 +239,20 @@ class DataObject(metaclass=DataObjectMetaclass):
 
     @classmethod
     def all(cls):
-        yield from cls.filter()
+        return cls.filter()
 
-    def count(self, field=None):
+    @classmethod
+    def all_iter(cls):
+        yield from cls.filter_iter()
+
+    @classmethod
+    def count(cls, field=None):
         sql = 'SELECT COUNT({field}) AS count FROM {table}'.format(
-            field=1 if field not in self.__fields__ else field,
-            table=self.__table__
+            field=1 if field not in cls.__fields__ else field,
+            table=cls.__table__
         )
         try:
-            return self._execute(sql)[0]['count']
+            return cls._query(sql)[0]['count']
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
 

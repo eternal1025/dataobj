@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='dataobj',
-    version='0.5',
+    version='0.7',
     packages=['dataobj'],
     url='',
     license='Apache',

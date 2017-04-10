@@ -45,35 +45,38 @@ class FolderDataObject(DataObject):
 
 if __name__ == '__main__':
     # Create a new object
-    folder = FolderDataObject()
-    folder.name = 'name'
-    print(folder.dump())
-    print(folder)
+    # folder = FolderDataObject()
+    # folder.name = 'name'
+    # print(folder.dump())
     # print(folder)
-    # #
-    folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
-    print(folder_2)
-    # #
-    # # # Save folder object
-    folder_2.dump()
-    print(folder_2)
-    # print(FolderDataObject.load(7))
+    # # print(folder)
+    # # #
+    # folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
+    # print(folder_2)
+    # # #
+    # # # # Save folder object
+    # folder_2.dump()
+    # print(folder_2)
+    # # print(FolderDataObject.load(7))
+    #
+    # # Load a folder object from database
+    # folder = FolderDataObject.load(2)
+    # # print('{!r}'.format(folder))
+    #
+    # # Rename folder
+    # folder.name = '新建文件夹-改名'
+    # print(folder)
+    #
+    # # Sync it to db
+    # folder.update()
+    # print(folder)
+    #
+    # # Delete a folder
+    # folder.delete()
+    #
+    # # Filter
+    # for f in FolderDataObject.all():
+    #     print(f)
 
-    # Load a folder object from database
-    folder = FolderDataObject.load(2)
-    # print('{!r}'.format(folder))
-
-    # Rename folder
-    folder.name = '新建文件夹-改名'
-    print(folder)
-
-    # Sync it to db
-    folder.update()
-    print(folder)
-
-    # Delete a folder
-    folder.delete()
-
-    # Filter
-    for f in FolderDataObject.all():
-        print(f)
+    f = FolderDataObject.load(9)
+    print(f)
