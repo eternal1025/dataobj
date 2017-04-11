@@ -43,40 +43,21 @@ class FolderDataObject(DataObject):
     create_at = DatetimeField(default=datetime.datetime.now)
 
 
-if __name__ == '__main__':
-    # Create a new object
-    # folder = FolderDataObject()
-    # folder.name = 'name'
-    # print(folder.dump())
-    # print(folder)
-    # # print(folder)
-    # # #
-    # folder_2 = FolderDataObject(name='新建测试文件夹-2017-2')
-    # print(folder_2)
-    # # #
-    # # # # Save folder object
-    # folder_2.dump()
-    # print(folder_2)
-    # # print(FolderDataObject.load(7))
-    #
-    # # Load a folder object from database
-    # folder = FolderDataObject.load(2)
-    # # print('{!r}'.format(folder))
-    #
-    # # Rename folder
-    # folder.name = '新建文件夹-改名'
-    # print(folder)
-    #
-    # # Sync it to db
-    # folder.update()
-    # print(folder)
-    #
-    # # Delete a folder
-    # folder.delete()
-    #
-    # # Filter
-    # for f in FolderDataObject.all():
-    #     print(f)
+class FolderChildDataObject(DataObject):
+    __table__ = 'folder_child'
+    __dao_class__ = CommonDao
 
-    f = FolderDataObject.load(9)
-    print(f)
+    id = IntField(primary_key=True)
+    folder_id = IntField()
+    child_id = IntField()
+    child_type = StrField()
+
+
+if __name__ == '__main__':
+    # folder = FolderDataObject(name="文件夹1",
+    #                           icon_url='test.png')
+    # print(folder.dump())
+    folder = FolderDataObject.load(1)
+    child = FolderChildDataObject(child_id=1, child_type='app',
+                                  folder=folder)
+    print(child.dump())
