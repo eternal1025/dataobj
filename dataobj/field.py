@@ -156,7 +156,7 @@ class DecimalField(Field):
 class _BasicCollectionField(Field):
     def _db_format(self, value):
         try:
-            return escape_str(json.dumps(value))
+            return escape_str(json.dumps(value, ensure_ascii=False))
         except:
             return value
 

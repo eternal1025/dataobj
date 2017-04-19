@@ -137,10 +137,21 @@ class DataObject(metaclass=DataObjectMetaclass):
         :return: True/False
         """
         try:
-            sql = SQLBuilder(self.__table__,
-                             insert=self.__as_db_dict()).sql
+            primary_key_value = getattr(self, self.__primary_key__.name, None)
 
-            setattr(self, self.__primary_key__.name, self._execute(sql))
+            d = self.__as_db_dict()
+
+            if primary_key_value is not None:
+                d[self.__primary_key__.db_column] = primary_key_value
+
+            sql = SQLBuilder(self.__table__,
+                             insert=d).sql
+
+            if primary_key_value is not None:
+                setattr(self, self.__primary_key__.name, self._execute(sql))
+            else:
+                self._execute(sql)
+
             return True
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
@@ -222,9 +233,21 @@ class DataObject(metaclass=DataObjectMetaclass):
         return list(result) if result is not None else []
 
     @classmethod
+    def filter_values_of_primary_key(cls, **where):
+        try:
+            for row in cls._query(SQLBuilder(cls.__table__, select=cls.__primary_key__.db_column,
+                                             where=cls.__safe_conditions(**where))):
+                try:
+                    yield cls(**cls.__format_db_data(row))
+                except Exception as err:
+                    logger.error(err, exc_info=DEBUG)
+                    continue
+        except Exception as err:
+            logger.error(err, exc_info=DEBUG)
+
+    @classmethod
     def filter_iter(cls, **where):
         try:
-
             sql = SQLBuilder(cls.__table__, select=cls.__db_mappings__,
                              where=cls.__safe_conditions(**where)).sql
             for row in cls._query(sql):
