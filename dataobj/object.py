@@ -233,12 +233,17 @@ class DataObject(metaclass=DataObjectMetaclass):
         return list(result) if result is not None else []
 
     @classmethod
-    def filter_values_of_primary_key(cls, **where):
+    def filter_values_of_primary_key(cls, **kwargs):
+        result = cls.filter_values_of_primary_key_iter(**kwargs)
+        return list(result) if result is not None else []
+
+    @classmethod
+    def filter_values_of_primary_key_iter(cls, **where):
         try:
             for row in cls._query(SQLBuilder(cls.__table__, select=cls.__primary_key__.db_column,
-                                             where=cls.__safe_conditions(**where))):
+                                             where=cls.__safe_conditions(**where)).sql):
                 try:
-                    yield cls(**cls.__format_db_data(row))
+                    yield cls.__format_db_data(row).get(cls.__primary_key__.name)
                 except Exception as err:
                     logger.error(err, exc_info=DEBUG)
                     continue
@@ -267,6 +272,14 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def all_iter(cls):
         yield from cls.filter_iter()
+
+    @classmethod
+    def all_values_of_primary_key(cls):
+        return cls.filter_values_of_primary_key()
+
+    @classmethod
+    def all_values_of_primary_key_iter(cls):
+        yield from cls.filter_values_of_primary_key_iter()
 
     @classmethod
     def count(cls, field=None):
