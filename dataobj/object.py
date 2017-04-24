@@ -148,9 +148,9 @@ class DataObject(metaclass=DataObjectMetaclass):
                              insert=d).sql
 
             if primary_key_value is not None:
-                setattr(self, self.__primary_key__.name, self._execute(sql))
-            else:
                 self._execute(sql)
+            else:
+                setattr(self, self.__primary_key__.name, self._execute(sql))
 
             return True
         except Exception as err:
