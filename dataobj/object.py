@@ -233,34 +233,27 @@ class DataObject(metaclass=DataObjectMetaclass):
         return list(result) if result is not None else []
 
     @classmethod
-    def filter_values_of_primary_key(cls, **kwargs):
-        result = cls.filter_values_of_primary_key_iter(**kwargs)
+    def filter_with_fields(cls, *fields, **where):
+        result = cls.filter_with_fields_iter(*fields, **where)
         return list(result) if result is not None else []
 
     @classmethod
-    def filter_values_of_primary_key_iter(cls, **where):
+    def filter_with_fields_iter(cls, *fields, **where):
         try:
-            for row in cls._query(SQLBuilder(cls.__table__, select=cls.__primary_key__.db_column,
+            assert len(fields) > 0, ValueError('Fields are not specified yet')
+            db_fields = [cls.__mappings__.get(x).db_column for x in fields if x in cls.__mappings__]
+            for row in cls._query(SQLBuilder(cls.__table__, select=db_fields,
                                              where=cls.__safe_conditions(**where)).sql):
-                try:
-                    yield cls.__format_db_data(row).get(cls.__primary_key__.name)
-                except Exception as err:
-                    logger.error(err, exc_info=DEBUG)
-                    continue
+                yield cls.__format_db_data(row)
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
 
     @classmethod
     def filter_iter(cls, **where):
         try:
-            sql = SQLBuilder(cls.__table__, select=cls.__db_mappings__,
-                             where=cls.__safe_conditions(**where)).sql
-            for row in cls._query(sql):
-                try:
-                    yield cls(**cls.__format_db_data(row))
-                except Exception as err:
-                    logger.error(err, exc_info=DEBUG)
-                    continue
+            for row in cls.filter_with_fields_iter(*[f.name for f in cls.__fields__],
+                                                   **where):
+                yield cls(**row)
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
             return None
@@ -272,14 +265,6 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def all_iter(cls):
         yield from cls.filter_iter()
-
-    @classmethod
-    def all_values_of_primary_key(cls):
-        return cls.filter_values_of_primary_key()
-
-    @classmethod
-    def all_values_of_primary_key_iter(cls):
-        yield from cls.filter_values_of_primary_key_iter()
 
     @classmethod
     def count(cls, field=None):
