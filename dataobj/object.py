@@ -251,7 +251,7 @@ class DataObject(metaclass=DataObjectMetaclass):
     @classmethod
     def filter_iter(cls, **where):
         try:
-            for row in cls.filter_with_fields_iter(*[f.name for f in cls.__fields__],
+            for row in cls.filter_with_fields_iter(*[f.name for f in cls.__db_mappings__.values()],
                                                    **where):
                 yield cls(**row)
         except Exception as err:
