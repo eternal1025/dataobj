@@ -8,7 +8,7 @@
 
 import logging
 from dataobj.field import Field
-from sqlbuilder import SQLBuilder
+from dataobj.sqlargs import SQLArgsBuilder
 
 from pprint import pformat
 from dataobj.exception import TableNotDefinedError, DuplicatePrimaryKeyError, PrimaryKeyNotFoundError
@@ -144,13 +144,13 @@ class DataObject(metaclass=DataObjectMetaclass):
             if primary_key_value is not None:
                 d[self.__primary_key__.db_column] = primary_key_value
 
-            sql = SQLBuilder(self.__table__,
-                             insert=d).sql
+            sql, args = SQLArgsBuilder(self.__table__,
+                                       insert=d).sql_args
 
             if primary_key_value is not None:
-                self._execute(sql)
+                self._execute(sql, args)
             else:
-                setattr(self, self.__primary_key__.name, self._execute(sql))
+                setattr(self, self.__primary_key__.name, self._execute(sql, args))
 
             return True
         except Exception as err:
@@ -201,10 +201,10 @@ class DataObject(metaclass=DataObjectMetaclass):
                 setattr(self, k, v)
 
             cond = {self.__primary_key__.db_column: self.__get_value_or_default(self.__primary_key__.name)}
-            sql = SQLBuilder(self.__table__,
-                             update=self.__as_db_dict(),
-                             where=cond).sql
-            self._execute(sql)
+            sql, args = SQLArgsBuilder(self.__table__,
+                                       update=self.__as_db_dict(),
+                                       where=cond).sql_args
+            self._execute(sql, args)
             return True
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
@@ -218,10 +218,10 @@ class DataObject(metaclass=DataObjectMetaclass):
         """
         try:
             cond = {self.__primary_key__.db_column: self.__get_value_or_default(self.__primary_key__.name)}
-            sql = SQLBuilder(self.__table__,
-                             delete='',
-                             where=cond).sql
-            self._execute(sql)
+            sql, args = SQLArgsBuilder(self.__table__,
+                                       delete='',
+                                       where=cond).sql_args
+            self._execute(sql, args)
             return True
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
@@ -242,9 +242,11 @@ class DataObject(metaclass=DataObjectMetaclass):
         try:
             assert len(fields) > 0, ValueError('Fields are not specified yet')
             db_fields = [cls.__mappings__.get(x).db_column for x in fields if x in cls.__mappings__]
-            for row in cls._query(SQLBuilder(cls.__table__, select=db_fields,
-                                             where=cls.__safe_conditions(**where)).sql):
+            sql, args = SQLArgsBuilder(cls.__table__, select=db_fields,
+                                       where=cls.__safe_conditions(**where)).sql_args
+            for row in cls._query(sql, args):
                 yield cls.__format_db_data(row)
+
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
 
@@ -273,7 +275,7 @@ class DataObject(metaclass=DataObjectMetaclass):
             table=cls.__table__
         )
         try:
-            return cls._query(sql)[0]['count']
+            return cls._query(sql, None)[0]['count']
         except Exception as err:
             logger.error(err, exc_info=DEBUG)
 
@@ -318,13 +320,13 @@ class DataObject(metaclass=DataObjectMetaclass):
         return field.db_format(value) if format_ else value
 
     @classmethod
-    def _query(cls, sql):
+    def _query(cls, sql, args):
         logger.debug('Query SQL: {}'.format(sql))
-        return cls.__dao_class__().query(sql)
+        return cls.__dao_class__().query(sql, args)
 
-    def _execute(self, sql):
+    def _execute(self, sql, args):
         logger.debug('Execute SQL: {}'.format(sql))
-        return self.__dao_class__().execute(sql)
+        return self.__dao_class__().execute(sql, args)
 
 
 __all__ = ['DataObject']

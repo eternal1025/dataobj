@@ -25,12 +25,12 @@ class CommonDao(object):
         pass
 
     @staticmethod
-    def execute(sql):
-        return mysql_execute(sql, mysql_url=URL)
+    def execute(sql, args):
+        return mysql_execute(sql, args=args, mysql_url=URL)
 
     @staticmethod
-    def query(sql):
-        return mysql_query(sql, mysql_url=URL)
+    def query(sql, args):
+        return mysql_query(sql, args=args, mysql_url=URL)
 
 
 class FolderDataObject(DataObject):
@@ -54,10 +54,13 @@ class FolderChildDataObject(DataObject):
 
 
 if __name__ == '__main__':
-    # folder = FolderDataObject(name="文件夹1",
+    # folder = FolderDataObject(name="文件夹100",
     #                           icon_url='test.png')
     # print(folder.dump())
-    folder = FolderDataObject.load(1)
-    child = FolderChildDataObject(child_id=1, child_type='app',
-                                  folder=folder)
-    print(child.dump())
+    folder = FolderDataObject.load(2)
+    print(folder)
+    folder.update(name='测试哦')
+    # folder.delete()
+    # child = FolderChildDataObject(child_id=1, child_type='app',
+    #                               folder=folder)
+    # print(child.dump())
