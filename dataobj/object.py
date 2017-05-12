@@ -8,7 +8,7 @@
 
 import logging
 from dataobj.field import Field
-from dataobj.sqlargs import SQLArgsBuilder
+from dataobj.sqlargs import SQLArgsBuilder, SQLCondition
 
 from pprint import pformat
 from dataobj.exception import TableNotDefinedError, DuplicatePrimaryKeyError, PrimaryKeyNotFoundError
@@ -284,11 +284,13 @@ class DataObject(metaclass=DataObjectMetaclass):
         # replace query condition keys with the real ones
         conditions = {}
         for k, v in where.items():
-            f = cls.__mappings__.get(k)
-            if f is None:
-                raise AttributeError('Field `{}` is not defined in class `{}`'.format(k, cls.__name__))
+            sql_cond = SQLCondition(k, v)
+            field_name = sql_cond.field_name
+            if field_name not in cls.__mappings__:
+                raise AttributeError('Field `{}` is not defined in class `{}`'.format(field_name, cls.__name__))
 
-            conditions[f.db_column] = v
+            field = cls.__mappings__.get(field_name, None)
+            conditions['{}__{}'.format(field.db_column, sql_cond.condition)] = v
 
         return conditions
 

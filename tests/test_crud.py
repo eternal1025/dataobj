@@ -26,11 +26,13 @@ class CommonDao(object):
 
     @staticmethod
     def execute(sql, args):
-        return mysql_execute(sql, args=args, mysql_url=URL)
+        print(sql, args)
+        return mysql_execute(sql, args=args, mysql_url=URL, debug=True)
 
     @staticmethod
     def query(sql, args):
-        return mysql_query(sql, args=args, mysql_url=URL)
+        print(sql, args)
+        return mysql_query(sql, args=args, mysql_url=URL, debug=True)
 
 
 class FolderDataObject(DataObject):
@@ -38,7 +40,7 @@ class FolderDataObject(DataObject):
     __dao_class__ = CommonDao
 
     folder_id = IntField(db_column='id', primary_key=True)
-    name = StrField(default='新建文件夹')
+    name = StrField(db_column='name', default='新建文件夹')
     icon_url = StrField(default='default.png')
     create_at = DatetimeField(default=datetime.datetime.now)
 
@@ -57,10 +59,11 @@ if __name__ == '__main__':
     # folder = FolderDataObject(name="文件夹100",
     #                           icon_url='test.png')
     # print(folder.dump())
-    folder = FolderDataObject.load(2)
-    print(folder)
-    folder.update(name='测试哦')
-    # folder.delete()
-    # child = FolderChildDataObject(child_id=1, child_type='app',
-    #                               folder=folder)
-    # print(child.dump())
+    # folder = FolderDataObject.load(2)
+    # print(folder)
+    # folder.update(name='测试哦')
+    for x in FolderDataObject.all():
+        print(x)
+
+    for x in FolderDataObject.filter(folder_id__isnull=True):
+        print(x)

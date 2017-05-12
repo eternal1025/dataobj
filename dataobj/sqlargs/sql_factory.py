@@ -7,7 +7,7 @@
 # Description: simple sql factories
 
 
-from dataobj.sqlargs.condition_parser import ConditionParser
+from dataobj.sqlargs.condition import SQLCondition
 
 __version__ = '0.0.2'
 __author__ = 'Chris'
@@ -35,7 +35,7 @@ class SQLArgsFactory(object):
 
     @property
     def fields(self):
-        return self._args or self._kwargs
+        return sorted(self._args or self._kwargs)
 
     def _select(self):
         sql = 'SELECT {fields} FROM {table}'
@@ -45,15 +45,20 @@ class SQLArgsFactory(object):
     def _insert(self):
         if self._kwargs:
             sql = 'INSERT INTO {} ({}) VALUES ({})'
-            return sql.format(self._table, ', '.join(self._kwargs),
-                              ', '.join('%({})s'.format(f) for f in self._kwargs)), self._kwargs
+            row = sorted(self._kwargs)
+            return sql.format(self._table, ', '.join(row),
+                              ', '.join('%({})s'.format(f) for f in row)), self._kwargs
         else:
             return ''
 
     def _update(self):
-        sql = 'UPDATE {} SET {}'
-        return sql.format(self._table,
-                          ', '.join('{} = %({})s'.format(f, f) for f in self._kwargs)), self._kwargs
+        if self._kwargs:
+            sql = 'UPDATE {} SET {}'
+            row = self._kwargs
+            return sql.format(self._table,
+                              ', '.join('{} = %({})s'.format(f, f) for f in row)), self._kwargs
+        else:
+            return ''
 
     def _delete(self):
         sql = 'DELETE FROM {}'
@@ -62,32 +67,30 @@ class SQLArgsFactory(object):
     def _where(self):
         if self._kwargs:
             args = {'cond_{}'.format(k): v for k, v in self._kwargs.items()}
-            parser = ConditionParser()
-            conditions = ['{}'.format(parser.parse(key, value)) for key, value in self._kwargs.items()]
+            conditions = ['{}'.format(SQLCondition(key, value).sql) for key, value in self._kwargs.items()]
             return ' WHERE {}'.format(
-                ' AND '.join(conditions)), args
+                ' AND '.join(sorted(conditions))), args
         else:
             return ''
 
     def _group_by(self):
         if len(self.fields) > 0:
             sql = ' GROUP BY {}'
-            return sql.format(', '.join(self._args or self._kwargs)), {}
+            return sql.format(', '.join(self.fields)), {}
 
         return ''
 
     def _having(self):
         if self._kwargs:
             args = {'cond_{}'.format(k): v for k, v in self._kwargs.items()}
-            parser = ConditionParser()
-            conditions = ['{}'.format(parser.parse(key, value)) for key, value in self._kwargs.items()]
-            return ' HAVING {}'.join(conditions), args
+            conditions = ['{}'.format(SQLCondition(key, value).sql) for key, value in self._kwargs.items()]
+            return ' HAVING {}'.join(sorted(conditions)), args
         else:
             return ''
 
     def _order_by(self):
         if len(self.fields) > 0:
-            return 'ORDER BY {}'.format(', '.join(self._args or self._kwargs)), {}
+            return 'ORDER BY {}'.format(', '.join(self.fields)), {}
         else:
             return ''
 
