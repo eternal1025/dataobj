@@ -10,7 +10,11 @@ import decimal
 import logging
 import datetime
 from db_util import mysql_query, mysql_execute
-from dataobj import DataObject, IntField, StrField, DatetimeField
+from dataobj import DataObject
+from dataobj import DatetimeField
+from dataobj import IntField
+from dataobj import ListField
+from dataobj import StrField
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
@@ -21,9 +25,6 @@ URL = 'mysql://root:chris@localhost:3306/yunos_new'
 
 
 class CommonDao(object):
-    def __init__(self):
-        pass
-
     @staticmethod
     def execute(sql, args):
         print(sql, args)
@@ -41,7 +42,8 @@ class FolderDataObject(DataObject):
 
     folder_id = IntField(db_column='id', primary_key=True)
     name = StrField(db_column='name', default='新建文件夹')
-    icon_url = StrField(default='default.png')
+    # icon_url = StrField(default='default.png')
+    icon_url = ListField()
     create_at = DatetimeField(default=datetime.datetime.now)
 
 
@@ -62,8 +64,10 @@ if __name__ == '__main__':
     # folder = FolderDataObject.load(2)
     # print(folder)
     # folder.update(name='测试哦')
+    folder = FolderDataObject(icon_url=[(1, 2, 3, 4), ("xxx", "xxx")])
+    folder.dump()
     for x in FolderDataObject.all():
         print(x)
 
-    for x in FolderDataObject.filter(folder_id__isnull=True):
-        print(x)
+    # for x in FolderDataObject.filter(folder_id__isnull=True):
+    #     print(x)
