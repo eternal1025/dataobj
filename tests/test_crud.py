@@ -10,7 +10,7 @@ import decimal
 import logging
 import datetime
 from db_util import mysql_query, mysql_execute
-from dataobj import DataObject
+from dataobj import Model
 from dataobj import DatetimeField
 from dataobj import IntField
 from dataobj import ListField
@@ -19,7 +19,7 @@ from dataobj import StrField
 __version__ = '0.0.1'
 __author__ = 'Chris'
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.ERROR)
 
 URL = 'mysql://root:chris@localhost:3306/yunos_new'
 
@@ -27,47 +27,54 @@ URL = 'mysql://root:chris@localhost:3306/yunos_new'
 class CommonDao(object):
     @staticmethod
     def execute(sql, args):
-        print(sql, args)
+        print("execute:", sql, args)
         return mysql_execute(sql, args=args, mysql_url=URL, debug=True)
 
     @staticmethod
     def query(sql, args):
-        print(sql, args)
+        print("query:", sql, args)
         return mysql_query(sql, args=args, mysql_url=URL, debug=True)
 
 
-class FolderDataObject(DataObject):
-    __table__ = 'folder'
-    __dao_class__ = CommonDao
-
-    folder_id = IntField(db_column='id', primary_key=True)
-    name = StrField(db_column='name', default='新建文件夹')
-    # icon_url = StrField(default='default.png')
-    icon_url = ListField()
+class Folder(Model):
+    folder_id = IntField(db_column='id', primary_key=True, auto_increment=True)
+    name = StrField(db_column='name', default='新建文件夹', max_length=255)
+    icon_url = StrField(not_null=True, max_length=1024)
     create_at = DatetimeField(default=datetime.datetime.now)
 
-
-class FolderChildDataObject(DataObject):
-    __table__ = 'folder_child'
-    __dao_class__ = CommonDao
-
-    id = IntField(primary_key=True)
-    folder_id = IntField()
-    child_id = IntField()
-    child_type = StrField()
+    class Meta:
+        table_name = 'folder'
+        dao_class = CommonDao
 
 
 if __name__ == '__main__':
-    # folder = FolderDataObject(name="文件夹100",
-    #                           icon_url='test.png')
-    # print(folder.dump())
-    # folder = FolderDataObject.load(2)
-    # print(folder)
-    # folder.update(name='测试哦')
-    folder = FolderDataObject(icon_url=[(1, 2, 3, 4), ("xxx", "xxx")])
-    folder.dump()
-    for x in FolderDataObject.all():
-        print(x)
+    for folder in Folder.objects.all().order_by('folder_id', descending=True).limit(3):
+        print(folder)
+    print()
+    print(Folder.objects.all().order_by('name').limit(1).last())
+    # print(Folder.objects.all().first())
 
-    # for x in FolderDataObject.filter(folder_id__isnull=True):
-    #     print(x)
+    # 新增
+    folder = Folder(name='新建测试文件夹',
+                    icon_url='https://baidu.com/icon.png')
+    print(folder)
+    print(folder.dump())
+
+    folder_id = folder.folder_id
+
+    # 修改
+    folder = Folder.objects.get(folder_id=folder_id)
+    print(folder)
+
+    folder.icon_url = 'https://moviewisdom.cn'
+    print(folder.update())
+
+    # 修改方式 2
+    folder = Folder.objects.get(folder_id=folder_id)
+    print(folder)
+
+    print(folder.update(icon_url='https://moviewisdom.cn/change_url'))
+
+    # 删除
+    folder = Folder.objects.get(folder_id=folder_id)
+    folder.delete()

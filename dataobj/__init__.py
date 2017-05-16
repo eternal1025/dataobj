@@ -6,18 +6,5 @@
 # Version: 0.0.1
 # Description: description of this file.
 
-from dataobj.field import (IntField,
-                           StrField,
-                           DatetimeField,
-                           DateField,
-                           TimeField,
-                           BoolField,
-                           FloatField,
-                           Field,
-                           DecimalField,
-                           ListField,
-                           DictField,
-                           SetField,
-                           BlobField)
-
-from dataobj.object import DataObject
+from dataobj.model import Model
+from dataobj.fields import *

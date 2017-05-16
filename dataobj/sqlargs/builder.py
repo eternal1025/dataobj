@@ -18,7 +18,7 @@ __all__ = ['SQLArgsBuilder']
 class SQLArgsBuilder(object):
     queries = ('select', 'insert', 'update', 'delete',
                'where', 'group_by', 'having',
-               'order_by')
+               'descending_order_by', 'ascending_order_by', 'limit')
 
     def __init__(self, table, **kwargs):
         self._table = table
@@ -51,7 +51,7 @@ class SQLArgsBuilder(object):
                 if factory:
                     yield factory.sql_args
             except KeyError:
-                print('Unsupported query: {}'.format(q))
+                print('Unsupported _query: {}'.format(q))
 
     @property
     def sql_args(self):
@@ -78,5 +78,5 @@ if __name__ == '__main__':
         'name__startswith': 'c'
     }
 
-    builder = SQLArgsBuilder('test', update=data, where=condition)
+    builder = SQLArgsBuilder('test', select=data, where=condition, descending_order_by='xyz', limit=10)
     print(builder)

@@ -11,6 +11,14 @@ __version__ = '0.0.1'
 __author__ = 'Chris'
 
 
+class MissingFieldNameError(Exception):
+    pass
+
+
+class MissingColumnNameError(Exception):
+    pass
+
+
 class FieldFormatError(Exception):
     pass
 

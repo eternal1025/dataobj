@@ -88,9 +88,24 @@ class SQLArgsFactory(object):
         else:
             return ''
 
-    def _order_by(self):
+    def _descending_order_by(self):
         if len(self.fields) > 0:
-            return 'ORDER BY {}'.format(', '.join(self.fields)), {}
+            return ' ORDER BY {} DESC'.format(', '.join(self.fields)), {}
+        else:
+            return ''
+
+    def _ascending_order_by(self):
+        if len(self.fields) > 0:
+            return ' ORDER BY {}'.format(', '.join(self.fields)), {}
+        else:
+            return ''
+
+    def _limit(self):
+        if len(self.fields) > 0:
+            try:
+                return ' LIMIT %(filter_how_many_rows)s', {'filter_how_many_rows': int(self.fields[0])}
+            except:
+                return ''
         else:
             return ''
 
