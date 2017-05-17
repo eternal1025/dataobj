@@ -15,10 +15,12 @@ __author__ = 'Chris'
 class Dao(object):
     @staticmethod
     def execute(sql, args):
+        print(sql, args)
         return 0
 
     @staticmethod
     def query(sql, args):
+        print(sql, args)
         return []
 
 
@@ -38,15 +40,29 @@ class Book(Model):
 
 
 if __name__ == '__main__':
+    import copy
+
     book = Book(id="10")
     book.author = 'Chris'
-    # print(book.id, type(book.id))
-    # print(type(book.price))
-    # print(book.dict_data)
-    # print(book.value_of_primary_key)
+    print(book.id, type(book.id))
+    print(type(book.price))
+    print(book.dict_data)
     print(book.dump())
     print(book.delete())
     print(book.update())
 
-    for x in Book.objects.filter(name__startswith='chris').limit(10):
+    manger = Book.objects
+    print(manger, id(manger), manger.__dict__)
+
+    results = Book.objects.filter(name__startswith='chris').order_by("name").limit(100)[:]
+
+    new_manager = copy.deepcopy(manger)
+    print(new_manager, id(new_manager), new_manager.__dict__)
+
+    for x in Book.objects.limit(10):
         print(x)
+
+    # 检查字段是否存在于 Book Model 中
+    print('id' in Book)
+    print('id' in book)
+    print('names' in Book)

@@ -18,10 +18,10 @@ class NotNullValidator(object):
         return '<NotNullValidator>'
 
     def validate(self, param, value):
-        if isinstance(value, (int, float)):
-            return value
-
-        return value if value else self._error(param, value)
+        # if isinstance(value, (int, float)):
+        #     return value
+        # Empty list(or dict, set etc..) is not NULL, just empty.
+        return value if value is not None else self._error(param, value)
 
     def _error(self, param, value):
         if self._error_handler and callable(self._error_handler):

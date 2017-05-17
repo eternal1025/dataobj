@@ -84,8 +84,19 @@ class ModelMeta(type):
             attributes.pop(key)
 
         model = type.__new__(mcs, name, bases, attributes)
+
+        # INSTALL `DataObjectsManager` to handle db operations
         setattr(model, 'objects', DataObjectsManager(model))
         return model
+
+    def __contains__(self, field_name):
+        """
+        Support `field_name` in `Model` syntax
+        Easy way to check if the field_name exists in current model or not
+
+        :return: True/False
+        """
+        return field_name in self.__mappings__
 
     @staticmethod
     def get_table_name(name, attributes):
@@ -101,15 +112,38 @@ class ModelMeta(type):
 
 class Model(metaclass=ModelMeta):
     """
-    Basic model
+    Basic model class
+
+    Supported operations:
+    1. Insert a new object to database: `model.dump()`
+    2. Update an existing object: `model.update()`
+    3. Delete an existing object: `model.delete()`
+    4. Get an attribute: `model.attr_name` or `model['attr_name']`
+    5. Set an attribute: `mode.attr_name = value` or `model['attr_name'] = value`
+    6. Fields count: `len(model)`
+    7. Check a field name is in the model or not: `field_name in model` or `field_name in Model`
+    8. Get packed dict data: `model.dict_data`
     """
 
     def __init__(self, **kwargs):
+        """
+        Initialize fields of the model with given key-word arguments
+
+        :param kwargs: dict
+        """
         for field_name, field_instance in self.__mappings__.items():
             field_value = kwargs.pop(field_name, None) or field_instance.default
             setattr(self, field_name, field_value)
 
     def __setattr__(self, key, value):
+        """
+        Overwrite this method to validate the value of the key before
+        assigning to a specific field
+
+        :param key: any key (can be a field name of this model, or user-defined key)
+        :param value: value of the key
+        :return: None
+        """
         field = self.__mappings__.get(key, None)
         if field is not None:
             self.__dict__[key] = field.validate_input(value)
@@ -117,27 +151,76 @@ class Model(metaclass=ModelMeta):
             self.__dict__[key] = value
 
     def __getattribute__(self, item):
+        """
+        Validate the value of the given key `item` if `item` is a field name
+
+        :param item: keyword
+        :return: validated value
+        """
         field = object.__getattribute__(self, '__mappings__').get(item)
         if field is not None:
             return field.validate_output(self.__dict__.get(item))
         else:
             return object.__getattribute__(self, item)
 
-    def __str__(self):
-        return pformat(self.dict_data)
+    def __repr__(self):
+        return "<{class_name} data={data}>".format(class_name=self.__class__.__name__,
+                                                   data=pformat(self.dict_data))
+
+    def __contains__(self, field_name):
+        """
+        Support `field_name` in `model_instance` syntax
+        Easy way to check if the field_name exists in current model or not
+
+        :return: True/False
+        """
+        return field_name in self.__mappings__
+
+    def __getitem__(self, item):
+        """
+        Emulating a dict: fetch a key's value
+
+        Usage:
+            value = model['field_name']
+        """
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        """
+        Emulation a dict: set a key's value
+
+        Usage:
+            model['field_name'] = "FooBar"
+        """
+        return setattr(self, key, value)
+
+    def __len__(self):
+        """
+        Count how many fields do we have
+        """
+        return len(self.__db_mappings__)
 
     @property
     def dict_data(self):
         return {k: v for k, v in self.__dict__.items() if k.startswith('_') is False}
 
     def dump(self):
+        """
+        Insert it to the database
+        """
         return self.objects.dump(self)
 
     def update(self, **kwargs):
+        """
+        Update a model instance and save it to the database
+        """
         for key, value in kwargs.items():
             setattr(self, key, value)
 
         return self.objects.update(self)
 
     def delete(self):
+        """
+        Delete a model instance
+        """
         return self.objects.delete(self)
