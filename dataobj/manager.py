@@ -44,6 +44,7 @@ class DataObjectsManager(object):
     def get(self, **conditions):
         """
         Get a single item with the given conditions
+        Shortcut of the query syntax: "model.objects.filter(conditions).first()"
 
         Return None if no one matched
 
@@ -154,7 +155,7 @@ class DataObjectsManager(object):
         fields = model_instance.__fields__ if primary_field.auto_increment is True \
             else model_instance.__mappings__.values()
 
-        content = {field.db_column: getattr(model_instance, field.field_name) for field in fields}
+        content = {field.db_column: model_instance.__dict__.get(field.field_name) for field in fields}
         last_id = self._execute(*SQLArgsBuilder(self._model.__table_name__,
                                                 insert=content).sql_args)
 
@@ -168,8 +169,9 @@ class DataObjectsManager(object):
         Update the model instance in database
         """
         primary_field = model_instance.__primary_field__
-        value_of_primary_key = getattr(model_instance, primary_field.field_name)
-        content = {field.db_column: getattr(model_instance, field.field_name) for field in model_instance.__fields__}
+        value_of_primary_key = model_instance.__dict__.get(primary_field.field_name)
+        content = {field.db_column: model_instance.__dict__.get(field.field_name) for field in
+                   model_instance.__fields__}
         where = {primary_field.db_column: value_of_primary_key}
 
         self._execute(*SQLArgsBuilder(self._model.__table_name__,
@@ -183,7 +185,7 @@ class DataObjectsManager(object):
         Delete the model instance from database
         """
         primary_field = model_instance.__primary_field__
-        value_of_primary_key = getattr(model_instance, primary_field.field_name)
+        value_of_primary_key = model_instance.__dict__.get(primary_field.field_name)
 
         self._execute(*SQLArgsBuilder(self._model.__table_name__,
                                       delete='',
@@ -219,14 +221,7 @@ class DataObjectsManager(object):
         Generate model objects from query results
         """
         for row in self._select_now():
-            converted_row = {}
-            for column, value in row.items():
-                model_field = self._model.__db_mappings__.get(column)
-
-                if model_field:
-                    converted_row[model_field.field_name] = model_field.validate_output(value)
-
-            yield self._model(**converted_row)
+            yield self._model(**row)
 
     def _select_now(self):
         """
@@ -251,7 +246,7 @@ class DataObjectsManager(object):
                 raise ValueError('Field `{}` is not defined in class `{}`'.format(field_name, self._model.__name__))
 
             field = self._model.__mappings__.get(field_name)
-            where['{}__{}'.format(field.db_column, sql_cond.condition)] = v
+            where['{}__{}'.format(field.db_column, sql_cond.condition)] = field.validate_input(v)
 
         order_by_columns = list()
 
@@ -274,7 +269,15 @@ class DataObjectsManager(object):
         sql, args = SQLArgsBuilder(self._model.__table_name__,
                                    **kwargs).sql_args
 
-        yield from self._query(sql, args)
+        # Translate column to real field names
+        for row in self._query(sql, args):
+            converted_row = {}
+            for column, value in row.items():
+                model_field = self._model.__db_mappings__.get(column)
+
+                if model_field:
+                    converted_row[model_field.field_name] = model_field.validate_output(value)
+            yield converted_row
 
     def _execute(self, sql, args):
         """
@@ -292,7 +295,7 @@ class DataObjectsManager(object):
         """
         # print('Query sql "{}" with args "{}"'.format(sql, args))
         logger.debug('Query sql "{}" with args "{}"'.format(sql, args))
-        return self._model.__dao_class__.query(sql, args)
+        return self._model.__dao_class__.query(sql, args) or []
 
     #############################
     # Python's special methods  #

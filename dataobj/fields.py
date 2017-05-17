@@ -65,6 +65,10 @@ class BaseField(object):
         return self._default() if (self._default and
                                    callable(self._default)) is True else self._default
 
+    @default.setter
+    def default(self, value):
+        self._default = value
+
     @property
     def validators(self):
         return self._validators
@@ -326,7 +330,10 @@ class BoolField(BaseField):
         :return:
         """
         value = super().validate_input(value)
-        return int(value)
+        try:
+            return int(value)
+        except TypeError:
+            return 0
 
 
 class _JsonSerializeDeserializeMixin(object):

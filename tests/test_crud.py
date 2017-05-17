@@ -48,7 +48,7 @@ class Folder(Model):
 
 def test_query():
     print(Folder.objects.count())
-    results = Folder.objects.all().order_by("folder_id").limit(30)
+    results = Folder.objects.all().order_by("folder_id").limit(0)
     print("Length of results: {}".format(len(results)))
     print("First item of results: {}".format(results.first()))
     print("Last item of results: {}".format(results.last()))
@@ -91,6 +91,8 @@ def test_query():
     print(results.first())
 
     print(Folder.objects.limit(1).first())
+
+    print(list(Folder.objects.filter(name__startswith="你好")))
 
 
 def test_dump_new(start=10, how_many=50):

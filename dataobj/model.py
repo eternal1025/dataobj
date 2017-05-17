@@ -200,9 +200,25 @@ class Model(metaclass=ModelMeta):
         """
         return len(self.__db_mappings__)
 
+    @classmethod
+    def from_raw_dict(cls, **kwargs):
+        """
+        Create a new model instance from original db row data
+        """
+        d = {}
+        for column, value in kwargs.items():
+            field = cls.__db_mappings__.get(column)
+            if field is None:
+                logger.info('Ignore column `{}` with value `{}`'.format(column, value))
+                continue
+
+            d[field.field_name] = value
+
+        return cls(**d)
+
     @property
     def dict_data(self):
-        return {k: v for k, v in self.__dict__.items() if k.startswith('_') is False}
+        return {k: getattr(self, k) for k in self.__dict__ if k.startswith('_') is False}
 
     def dump(self):
         """
