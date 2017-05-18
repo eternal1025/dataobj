@@ -137,3 +137,4 @@ if __name__ == '__main__':
     test_list_field()
     test_dict_field()
     test_pickle_field()
+    print(DatetimeField(default=lambda: datetime.datetime.now).default)

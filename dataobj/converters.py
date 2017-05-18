@@ -33,6 +33,9 @@ class PyDatetimeConverter(object):
         :param to_what: str, choices: date, datetime, time
         :return: default is `datetime.datetime` type
         """
+        if tm is None:
+            return tm
+
         if isinstance(tm, datetime.datetime):
             return self._to_what_kind(tm, to_what)
 

@@ -34,8 +34,11 @@ class ModelMeta(type):
             return type.__new__(mcs, name, bases, attributes)
 
         # Ignore `base model`
-        if attributes.get('__base_class__', False) is True:
-            return type.__new__(mcs, name, bases, attributes)
+        try:
+            if attributes.get('Meta').is_base_model is True:
+                return type.__new__(mcs, name, bases, attributes)
+        except:
+            pass
 
         # Load dao class first
         try:
