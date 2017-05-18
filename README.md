@@ -99,6 +99,12 @@ f = Folder.objects.filter(folder_id__ne=2)
 ```
 
 # 更新日志
+## 2017-05-18
+1. `validators` 中存在的一些问题修复；
+2. 移除旧版 `dataobj` 存在的一些冗余字段，采用新的方式，附属信息放置于 `class Meta` 中。
+3. `manager` 中一些小问题修复。
+
+
 ## 2017-05-17 V2.0
 1. 新增模块 `model`, `fields`, `manager`, `converters`, `validators`；
 2. 完善 Model 的基本操作，支持类似字典的操作；增加参数赋值前自动校验；
