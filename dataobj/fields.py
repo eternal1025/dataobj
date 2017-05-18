@@ -35,7 +35,7 @@ class BaseField(object):
         self.max_length = max_length
         self.auto_increment = auto_increment
         self.choices = choices
-        self._validators = validators or []
+        self._validators = list(validators or [])
 
         # Setup validators
         if (not_null is True) or (self.primary_key and not self.auto_increment) is True:

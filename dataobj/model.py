@@ -164,7 +164,16 @@ class Model(metaclass=ModelMeta):
         if field is not None:
             return field.validate_output(self.__dict__.get(item))
         else:
-            return object.__getattribute__(self, item)
+            try:
+                return object.__getattribute__(self, item)
+            except AttributeError:
+                if hasattr(self.objects, item):
+                    nm = self.__class__.__name__
+                    raise AttributeError('"{}" object has no attribute "{}".'
+                                         ' Did you mean "{}.objects.{}" ?'.format(nm, item,
+                                                                                nm, item))
+                else:
+                    raise
 
     def __repr__(self):
         return "<{class_name} data={data}>".format(class_name=self.__class__.__name__,

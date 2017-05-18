@@ -47,6 +47,7 @@ if __name__ == '__main__':
     # print(book.author)
     # print(book.dict_data)
     book.dump()
+    book.filter()
 
     # print(Book.from_raw_dict(name="Chris", book_id=100, author="100"))
     # print(book.id, type(book.id))
