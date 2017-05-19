@@ -9,7 +9,8 @@
 import hashlib
 import pickle
 import warnings
-from string import ascii_uppercase, ascii_lowercase
+import random
+from string import ascii_uppercase, ascii_lowercase, digits, ascii_letters
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
@@ -28,6 +29,13 @@ def camel_to_underscore(key):
 
 def underscore_to_camel(key):
     return ''.join(x.capitalize() for x in key.split('_'))
+
+
+def get_random_salt(size=8, chars=None):
+    if not chars:
+        chars = digits + ascii_letters
+
+    return "".join(random.sample(chars, size))
 
 
 def get_object_fingerprint(obj, hash_method='md5'):
@@ -65,3 +73,5 @@ def validate_dao_class(c):
 if __name__ == '__main__':
     x = underscore_to_camel("hello_test")
     print(x)
+
+    print(get_random_salt())

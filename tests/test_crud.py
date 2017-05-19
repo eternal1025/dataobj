@@ -121,8 +121,16 @@ def test_delete():
     print(folder)
 
 
+def test_query_limit():
+    folder = Folder.objects.filter(folder_id__gte=5).order_by("folder_id").limit(2, 10)
+    print(len(folder))
+    print(folder[:])
+    print(folder.last())
+
+
 if __name__ == '__main__':
     # test_dump_new()
     # test_update()
     # test_delete()
     test_query()
+    test_query_limit()

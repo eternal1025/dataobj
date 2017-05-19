@@ -78,5 +78,5 @@ if __name__ == '__main__':
         'name__startswith': 'c'
     }
 
-    builder = SQLArgsBuilder('test', select=data, where=condition, descending_order_by='xyz', limit=10)
+    builder = SQLArgsBuilder('test', select=data, where=condition, descending_order_by='xyz', limit=(1, 10))
     print(builder)

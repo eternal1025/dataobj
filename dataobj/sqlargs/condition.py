@@ -28,29 +28,31 @@ class SQLCondition(object):
     10. isnull
     """
     CONDITION_MAPS = {
-        'eq': lambda _: '{field} = %(cond_{key})s',
-        'lt': lambda _: '{field} < %(cond_{key})s',
-        'gt': lambda _: '{field} > %(cond_{key})s',
-        'lte': lambda _: '{field} <= %(cond_{key})s',
-        'gte': lambda _: '{field} >= %(cond_{key})s',
-        'ne': lambda _: '{field} != %(cond_{key})s',
-        'contains': lambda _: '{field} LIKE CONCAT("%%", %(cond_{key})s, "%%")',
-        'startswith': lambda _: '{field} LIKE CONCAT(%(cond_{key})s, "%%")',
-        'endswith': lambda _: '{field} LIKE CONCAT("%%", %(cond_{key})s)',
+        'eq': lambda _: '{field} = %(cond_{key}_{salt})s',
+        'lt': lambda _: '{field} < %(cond_{key}_{salt})s',
+        'gt': lambda _: '{field} > %(cond_{key}_{salt})s',
+        'lte': lambda _: '{field} <= %(cond_{key}_{salt})s',
+        'gte': lambda _: '{field} >= %(cond_{key}_{salt})s',
+        'ne': lambda _: '{field} != %(cond_{key}_{salt})s',
+        'contains': lambda _: '{field} LIKE CONCAT("%%", %(cond_{key}_{salt})s, "%%")',
+        'startswith': lambda _: '{field} LIKE CONCAT(%(cond_{key}_{salt})s, "%%")',
+        'endswith': lambda _: '{field} LIKE CONCAT("%%", %(cond_{key}_{salt})s)',
         'isnull': lambda flag: '{field} IS NULL' if flag is True else '{field} IS NOT NULL'
     }
 
     # SELECT create_at, icon_url, id, name FROM folder WHERE name LIKE '%文件夹%'
 
-    def __init__(self, key, value=None):
+    def __init__(self, key, value=None, salt=None):
         """
         :param key: condition key
         :param value: value of the condition
+        :param salt: add salt to avoid duplicate field
         """
         self._key = key
         self._value = value
         self._field = ''
         self._condition = ''
+        self._salt = salt
         self.__parse_condition()
 
     def __repr__(self):
@@ -67,7 +69,7 @@ class SQLCondition(object):
     @property
     def sql(self):
         get_expression = self.CONDITION_MAPS.get(self._condition, None)
-        return get_expression(self._value).format(field=self._field, key=self._key)
+        return get_expression(self._value).format(field=self._field, key=self._key, salt=self._salt or '')
 
     @property
     def condition(self):

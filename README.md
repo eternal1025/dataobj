@@ -84,12 +84,12 @@ folder.delete()
 
 ```python
 # 查找指定名称的文件夹
-f = Folder.objects.filter(name='某某文件夹')
-f = Folder.objects.filter(name__eq='某某文件夹')
+f = Folder.objects.get(name='某某文件夹')
+f = Folder.objects.get(name__eq='某某文件夹')
 
 # 查找包含字符串的文件夹
 f = Folder.objects.filter(name__contains='娱乐')
-f = Folder.objects.filter(name__startswith='测试')
+f = Folder.objects.filter(name__startswith='测试').order_by('folder_id')
 f = Folder.objects.filter(name__endswith='影视')
 
 # 查找图标为 NULL 的文件夹
@@ -152,7 +152,9 @@ class AppDataObject(Model):
 # 更新日志
 ## 2017-05-19 V2.2
 1. 新增工具 `reflector` 模块，可以方便地对一个表中的字段反向映射成 Model；
-2. `utils` 工具更新。
+2. `utils` 工具更新；
+3. `sqlargs` 更新，支持 limit (m, n) 查询；
+4. `sqlargs` 安全更新，为条件语句生成的 field 加盐，防止字段名与用户定义的名称重复，避免覆盖。
 
 ## 2017-05-18 V2.1
 1. `validators` 中存在的一些问题修复；

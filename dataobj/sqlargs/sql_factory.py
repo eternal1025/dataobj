@@ -8,6 +8,7 @@
 
 
 from dataobj.sqlargs.condition import SQLCondition
+from dataobj.utils import get_random_salt
 
 __version__ = '0.0.2'
 __author__ = 'Chris'
@@ -65,9 +66,10 @@ class SQLArgsFactory(object):
         return sql.format(self._table), {}
 
     def _where(self):
+        salt = get_random_salt()
         if self._kwargs:
-            args = {'cond_{}'.format(k): v for k, v in self._kwargs.items()}
-            conditions = ['{}'.format(SQLCondition(key, value).sql) for key, value in self._kwargs.items()]
+            args = {'cond_{}_{}'.format(k, salt): v for k, v in self._kwargs.items()}
+            conditions = ['{}'.format(SQLCondition(key, value, salt).sql) for key, value in self._kwargs.items()]
             return ' WHERE {}'.format(
                 ' AND '.join(sorted(conditions))), args
         else:
@@ -81,9 +83,10 @@ class SQLArgsFactory(object):
         return ''
 
     def _having(self):
+        salt = get_random_salt()
         if self._kwargs:
-            args = {'cond_{}'.format(k): v for k, v in self._kwargs.items()}
-            conditions = ['{}'.format(SQLCondition(key, value).sql) for key, value in self._kwargs.items()]
+            args = {'cond_{}_{}'.format(k, salt): v for k, v in self._kwargs.items()}
+            conditions = ['{}'.format(SQLCondition(key, value, salt).sql) for key, value in self._kwargs.items()]
             return ' HAVING {}'.join(sorted(conditions)), args
         else:
             return ''
@@ -101,9 +104,17 @@ class SQLArgsFactory(object):
             return ''
 
     def _limit(self):
-        if len(self.fields) > 0:
+        try:
+            from_index = int(self._args[1])
+        except IndexError:
+            from_index = 0
+
+        if len(self._args) >= 1:
             try:
-                return ' LIMIT %(filter_how_many_rows)s', {'filter_how_many_rows': int(self.fields[0])}
+                salt = get_random_salt()
+                return ' LIMIT %(from_index_{salt})s, %(how_many_rows_{salt})s'.format(salt=salt), \
+                       {'how_many_rows_{salt}'.format(salt=salt): int(self._args[0]),
+                        'from_index_{salt}'.format(salt=salt): from_index}
             except:
                 return ''
         else:

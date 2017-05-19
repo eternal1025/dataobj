@@ -92,16 +92,19 @@ class DataObjectsManager(object):
         o._return_raw_data = True
         return o
 
-    def limit(self, n):
+    def limit(self, how_many, offset=0):
         """
         Limit rows
 
         Usage:
         >>> for x in model.objects.all().limit(10):
         >>>     print(x)
+
+        >>> for x in model.objects.all().limit(10, 10):
+        >>>     print(x)
         """
         o = copy.deepcopy(self)
-        o._query_collector['limit'] = n
+        o._query_collector['limit'] = (how_many, offset)
         return o
 
     def order_by(self, *field_names, descending=False):
