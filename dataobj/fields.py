@@ -11,7 +11,7 @@ import datetime
 import json
 import pickle
 
-from dataobj.exceptions import MissingColumnNameError, MissingFieldNameError
+from .exceptions import MissingColumnNameError, MissingFieldNameError
 from .converters import PyDatetimeConverter
 from .validators import (TypeValidator, NotNullValidator,
                          ChoiceValidator, LengthValidator)
@@ -203,7 +203,7 @@ class BlobField(BaseField):
     Map to MySQL blob type:
     1. tinyblob
     2. mediumblob
-    3. blog
+    3. blob
     4. longblob
     """
 

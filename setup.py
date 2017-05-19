@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='dataobj',
-    version='2.1',
+    version='2.2',
     packages=['dataobj', 'dataobj.sqlargs', 'dataobj.validators'],
     url='',
     license='Apache',

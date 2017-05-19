@@ -1,11 +1,22 @@
 # 说明
-`dataobj` 是一个简易的仿 ORM 的 Python 包，仅支持有限的 SQL 操作子集。详细的使用测试参见 `tests` 目录下的代码。
+`dataobj` 是一个简易的仿 ORM 的 Python 包，仅支持有限的 MySQL SQL 操作子集。详细的使用测试参见 `tests` 目录下的代码。
 
 # 调用过程
 1. 上层应用数据层对象 `XDataObject`；
 2. `dataobj` 进行字段类型检查、表字段名映射等；
 3. 调用 `sqlargs` 包生成定制的 SQL 模板及相应参数；
 4. 调用 `some_db_dao` 对象提供的数据库操作方法（要求实现 `execute(sql, args)`, `query(sql, args)` 接口）完成数据库操作。
+
+# 结构说明
+1. `manager`：实现数据库相关的查询、更新、删除、插入等操作；
+2. `model`：一个数据层对象的抽象；
+3. `fields`：提供了用于映射的字段类型，提供字段校验等机制；
+4. `converters`：一些常用的类型转换工具；
+5. `reflector`：用于自动映射数据库表到 Model 的工具；
+6. `utils`：常用的工具函数；
+7. `exceptions`：异常集合；
+8. `validators`：集成了一些公共的字段检验模块；
+9. `sqlargs`：用于生成 SQL 的工具包。
 
 # 使用示例
 1. 首先实现一个 DAO 层对象，提供基本的数据库操作接口
@@ -45,6 +56,7 @@ class Folder(Model):
 ```
 
 1. 接下来进行基本的 CRUD 操作
+
 ```python
 # 创建对象并写入数据库
 folder = Folder(name='测试文件夹', icon_url='test.png')
@@ -98,11 +110,54 @@ f = Folder.objects.filter(folder_id__lte=2)
 f = Folder.objects.filter(folder_id__ne=2)
 ```
 
+# Reflector 使用说明
+使用 Reflector 可以非常轻松地完成对一个表的自动映射，从而快速编写 Model，没必要再做繁杂的转换和敲键盘的工作了。
+使用方式非常简单，如下：
+
+```python
+from dataobj.reflector import MySQLTableReflector
+
+print(r.reflect('app', 'AppDataObject', introduction='intro'))
+```
+
+输出结果如下：
+
+```python
+class AppDataObject(Model):
+    id = IntField(auto_increment=True, max_length=11, not_null=True, primary_key=True)
+    name = StrField(max_length=255)
+    introduction = StrField(db_column='intro')
+    icon_url = StrField(max_length=255)
+    width = IntField(max_length=11)
+    height = IntField(max_length=11)
+    type = StrField(max_length=255)
+    is_resizeable = IntField(max_length=1)
+    has_toolbar = IntField(max_length=1)
+    is_flash = IntField(max_length=1)
+    usage_number = IntField(max_length=11)
+    create_at = DatetimeField()
+    category = StrField(max_length=255)
+    developer = StrField(max_length=255)
+    score = IntField(max_length=11)
+    scoring_at = DatetimeField()
+    app_url = StrField(max_length=255)
+    access_level = IntField(max_length=4)
+
+    class Meta:
+        table_name = 'app'
+        # 修改成实际的 DaoClass 即可
+        dao_class = DaoClass
+```
+
 # 更新日志
-## 2017-05-18
+## 2017-05-19 V2.2
+1. 新增工具 `reflector` 模块，可以方便地对一个表中的字段反向映射成 Model；
+2. `utils` 工具更新。
+
+## 2017-05-18 V2.1
 1. `validators` 中存在的一些问题修复；
-2. 移除旧版 `dataobj` 存在的一些冗余字段，采用新的方式，附属信息放置于 `class Meta` 中。
-3. `manager` 中一些小问题修复。
+2. 移除旧版 `dataobj` 存在的一些冗余字段，采用新的方式，附属信息放置于 `class Meta` 中；
+3. `manager` 中一些小问题修复；
 
 
 ## 2017-05-17 V2.0

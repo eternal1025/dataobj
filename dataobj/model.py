@@ -9,10 +9,10 @@
 import logging
 from pprint import pformat
 
-from dataobj.exceptions import DuplicatePrimaryKeyError, PrimaryKeyNotFoundError
-from dataobj.fields import *
-from dataobj.manager import DataObjectsManager
-from dataobj.utils import camel_to_underscore
+from .exceptions import DuplicatePrimaryKeyError, PrimaryKeyNotFoundError
+from .fields import *
+from .manager import DataObjectsManager
+from .utils import camel_to_underscore, validate_dao_class
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ class ModelMeta(type):
         # Load dao class first
         try:
             dao_class = attributes.get('Meta').dao_class
+            validate_dao_class(dao_class)
         except AttributeError:
             raise RuntimeError('Missing dao_class attribute in Meta class, please define it first')
 

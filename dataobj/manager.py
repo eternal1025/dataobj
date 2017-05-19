@@ -8,7 +8,7 @@
 
 import logging
 import copy
-from dataobj.sqlargs import SQLArgsBuilder, SQLCondition
+from .sqlargs import SQLArgsBuilder, SQLCondition
 
 __version__ = '0.0.2'
 __author__ = 'Chris'
@@ -286,8 +286,11 @@ class DataObjectsManager(object):
         # print('Execute sql "{}" with args "{}"'.format(sql, args))
         logger.debug('Execute sql "{}" with args "{}"'.format(sql, args))
 
-        # Return the last row id
-        return self._model.__dao_class__.execute(sql, args)
+        try:
+            # Return the last row id
+            return self._model.__dao_class__().execute(sql, args)
+        except AttributeError:
+            logger.warning('Dao class for model "{}" has no method "execute(sql, args)"'.format(self._model.__name__))
 
     def _query(self, sql, args):
         """
@@ -295,7 +298,7 @@ class DataObjectsManager(object):
         """
         # print('Query sql "{}" with args "{}"'.format(sql, args))
         logger.debug('Query sql "{}" with args "{}"'.format(sql, args))
-        return self._model.__dao_class__.query(sql, args) or []
+        return self._model.__dao_class__().query(sql, args) or []
 
     #############################
     # Python's special methods  #
