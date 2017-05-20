@@ -37,11 +37,12 @@ class CommonDao(object):
 def test_check_type_mappings():
     r = MySQLTableReflector(CommonDao)
     # print(r.get_type_mappings())
-    print(r.reflect('folder', 'FolderDataObject', folder_id="id"))
-    print(r.reflect('app', 'AppDataObject', introduction='intro'))
+    print(r.reflect('folder', 'FolderDataObject',))
+    print(r.reflect('app', 'AppDataObject'))
     print(r.reflect('app_score'))
     print(r.reflect('dock_child'))
     print(r.reflect('workspace_child').field_classes)
+    print(r.tables_can_be_reflected)
 
 
 if __name__ == '__main__':

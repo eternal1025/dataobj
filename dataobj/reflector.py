@@ -6,11 +6,17 @@
 # Version: 0.0.1
 # Description: Generate a model from the given table automatically
 
+import logging
+import dataobj
 from .utils import validate_dao_class, underscore_to_camel
 from .fields import *
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
+
+__all__ = ['ReflectedModel', 'MySQLTableReflector']
+
+logger = logging.getLogger(__name__)
 
 
 class ReflectedModel(object):
@@ -78,19 +84,41 @@ class MySQLTableReflector(object):
         return '<"{}" object with dao class "{}">'.format(self.__class__.__name__,
                                                           self._dao_class)
 
-    def reflect(self, table, model_name='', **field_name_mappings):
+    @property
+    def tables_can_be_reflected(self):
+        """
+        Return tables can be reflected in the activated database
+        """
+        try:
+            tables = []
+            for item in self._dao_class().query("SHOW TABLES;", None):
+                tables.append(list(item.values())[0])
+            return tables
+        except Exception as err:
+            logger.error(err)
+            return []
+
+    def reflect(self, table, model_name='', skip_columns=None, keep_columns=None,
+                field_name_mappings=None,
+                field_type_mappings=None):
         """
         Generate a Model class from the given table
 
         :param table: table name
         :param model_name: custom model name
+        :param skip_columns: column names to be skipped
+        :param keep_columns: column names to be used (if skip_columns is defined, it will be ignored)
+        :param field_type_mappings: custom field type mappings
         :param field_name_mappings: custom field mappings, key is your custom field name,
                             value is the column in database
         :return: formatted Model class str
         """
         return self._create_model(table, model_name,
-                                  **self._translate_descriptions_to_fields(*self._describe_table(table),
-                                                                           **field_name_mappings))
+                                  *self._translate_descriptions_to_fields(self._describe_table(table),
+                                                                          skip_columns or [],
+                                                                          keep_columns or [],
+                                                                          field_name_mappings or {},
+                                                                          field_type_mappings or {}))
 
     @classmethod
     def get_type_mappings(cls):
@@ -114,12 +142,20 @@ class MySQLTableReflector(object):
     def _describe_table(self, table):
         return self._dao_class().query('DESC {}'.format(table), None)
 
-    def _translate_descriptions_to_fields(self, *descriptions, **field_name_mappings):
-        fields = {}
+    def _translate_descriptions_to_fields(self, descriptions, skip_columns, keep_columns, field_name_mappings,
+                                          field_type_mappings):
+        fields = []
+        field_classes = []
         reversed_mappings = dict((v, k) for k, v in field_name_mappings.items())
 
         for column in descriptions:
             column_name = column.get('Field')
+            if column_name in skip_columns:
+                continue
+
+            if keep_columns and column_name not in keep_columns:
+                continue
+
             type_with_size = column.get('Type')
             column_type, *size = type_with_size.split('(')
             try:
@@ -133,7 +169,13 @@ class MySQLTableReflector(object):
             not_null = column.get('Null') != 'YES'
 
             # Create our field
-            field_class = self.get_type_mappings().get(column_type)
+            field_name = reversed_mappings.get(column_name) or column_name
+
+            if field_name in field_type_mappings:
+                field_class = getattr(dataobj, field_type_mappings.get(field_name))
+            else:
+                field_class = self.get_type_mappings().get(column_type)
+
             kwargs = {
                 'db_column': "'{}'".format(column_name) if column_name in reversed_mappings else '',
                 'primary_key': is_primary_key,
@@ -145,22 +187,24 @@ class MySQLTableReflector(object):
 
             kwargs = ', '.join('{}={}'.format(k, kwargs[k]) for k in sorted(kwargs) if kwargs[k])
             field = '{field_name} = {field_class}({kwargs})'.format(
-                field_name=reversed_mappings.get(column_name) or column_name,
+                field_name=field_name,
                 field_class=field_class.__name__,
                 kwargs=kwargs)
-            fields[field] = field_class
+            fields.append(field)
+            field_classes.append(field_class)
 
-        return fields
+        return fields, field_classes
 
-    def _create_model(self, table, model_name='', **fields):
+    def _create_model(self, table, model_name, fields, field_classes):
         assert isinstance(model_name, str)
         model_name = underscore_to_camel(table) if not model_name else model_name
         model_templates = ["class {model_name}(Model):".format(model_name=model_name)]
-        imports = set()
 
-        for field, name in fields.items():
-            imports.add(name)
-            model_templates.append("    {field}".format(field=field))
+        for field in sorted(fields):
+            if 'primary_key=True' in field:
+                model_templates.insert(1, '    {field}'.format(field=field))
+            else:
+                model_templates.append("    {field}".format(field=field))
 
         # Add meta class
         model_templates.append('')
@@ -169,4 +213,4 @@ class MySQLTableReflector(object):
                                "        dao_class = {}".format(table, self._dao_class.__name__))
         model_templates.append('')
 
-        return ReflectedModel(model_name, imports, '\n'.join(model_templates))
+        return ReflectedModel(model_name, field_classes, '\n'.join(model_templates))

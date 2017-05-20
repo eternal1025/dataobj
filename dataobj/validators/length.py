@@ -25,7 +25,11 @@ class LengthValidator(object):
         if value is None:
             return value
 
-        length = len(value)
+        try:
+            length = len(value)
+        except:
+            length = 0
+
         if self._min_length <= length <= self._max_length:
             return value
 
