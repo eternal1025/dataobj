@@ -41,7 +41,7 @@ def test_check_type_mappings():
     print(r.reflect('app', 'AppDataObject', introduction='intro'))
     print(r.reflect('app_score'))
     print(r.reflect('dock_child'))
-    print(r.reflect('workspace_child', auto_importing=True))
+    print(r.reflect('workspace_child').field_classes)
 
 
 if __name__ == '__main__':
