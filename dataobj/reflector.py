@@ -68,19 +68,20 @@ class MySQLTableReflector(object):
         return '<"{}" object with dao class "{}">'.format(self.__class__.__name__,
                                                           self._dao_class)
 
-    def reflect(self, table, model_name='', **field_name_mappings):
+    def reflect(self, table, model_name='', auto_importing=False, **field_name_mappings):
         """
         Generate a Model class from the given table
 
         :param table: table name
         :param model_name: custom model name (default model name is table.capitalize())
+        :param auto_importing:imports fields and so on for you
         :param field_name_mappings: custom field mappings, key is your custom field name,
                             value is the column in database
         :return: formatted Model class str
         """
-        return self._create_model(table, model_name,
-                                  *self._translate_descriptions_to_fields(*self._describe_table(table),
-                                                                          **field_name_mappings))
+        return self._create_model(table, model_name, auto_importing,
+                                  **self._translate_descriptions_to_fields(*self._describe_table(table),
+                                                                           **field_name_mappings))
 
     @classmethod
     def get_type_mappings(cls):
@@ -105,7 +106,7 @@ class MySQLTableReflector(object):
         return self._dao_class().query('DESC {}'.format(table), None)
 
     def _translate_descriptions_to_fields(self, *descriptions, **field_name_mappings):
-        fields = []
+        fields = {}
         reversed_mappings = dict((v, k) for k, v in field_name_mappings.items())
 
         for column in descriptions:
@@ -138,25 +139,30 @@ class MySQLTableReflector(object):
                 field_name=reversed_mappings.get(column_name) or column_name,
                 field_class=field_class.__name__,
                 kwargs=kwargs)
-            fields.append(field)
+            fields[field] = field_class.__name__
 
         return fields
 
-    @staticmethod
-    def _create_model(table, model_name='', *fields):
+    def _create_model(self, table, model_name='', auto_importing=False, **fields):
         assert isinstance(model_name, str)
         model_name = underscore_to_camel(table) if not model_name else model_name
-
         model_templates = ["class {model_name}(Model):".format(model_name=model_name)]
+        imports = set()
 
-        for field in fields:
+        for field, name in fields.items():
+            imports.add(name)
             model_templates.append("    {field}".format(field=field))
+
+        if auto_importing is True:
+            # Add imports
+            imports = ', '.join(imports)
+            model_templates.insert(0, 'from dataobj import (Model, {})\n\n'.format(imports))
 
         # Add meta class
         model_templates.append('')
         model_templates.append("    class Meta:\n"
                                "        table_name = '{}'\n"
-                               "        dao_class = DaoClass".format(table))
+                               "        dao_class = {}".format(table, self._dao_class.__name__))
         model_templates.append('')
 
         return '\n'.join(model_templates)
