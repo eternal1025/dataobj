@@ -136,7 +136,11 @@ class Model(metaclass=ModelMeta):
         :param kwargs: dict
         """
         for field_name, field_instance in self.__mappings__.items():
-            field_value = kwargs.pop(field_name, None) or field_instance.default
+            # field_value = kwargs.pop(field_name, None) or field_instance.default
+            field_value = kwargs.pop(field_name, None)
+            if field_value is None:
+                field_value = field_instance.default
+
             setattr(self, field_name, field_value)
 
     def __setattr__(self, key, value):

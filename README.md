@@ -150,6 +150,10 @@ class AppDataObject(Model):
 ```
 
 # 更新日志
+## 2017-05-22 V2.3
+1. 修复 Model 初始化时 0 变为 None 的问题；
+1. 
+
 ## 2017-05-19 V2.2
 1. 新增工具 `reflector` 模块，可以方便地对一个表中的字段反向映射成 Model；
 2. `utils` 工具更新；
