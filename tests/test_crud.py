@@ -35,6 +35,23 @@ class CommonDao(object):
         return mysql_query(sql, args=args, mysql_url=URL, debug=True)
 
 
+class FilmDataObject(Model):
+    film_id = IntField(auto_increment=True, db_column='film_belong_id', max_length=11, not_null=True, primary_key=True)
+    baike_url = StrField(db_column='baidubaikeUrl', max_length=1000)
+    douban_url = StrField(db_column='doubanUrl', max_length=1000)
+    film_length = StrField(db_column='filmLong', max_length=255)
+    film_name = StrField(db_column='zzb_fi_name', max_length=255)
+    picture_name = StrField(db_column='mainPic_name', max_length=255)
+    total_box = IntField(db_column='totalBox', max_length=11)
+
+    class Meta:
+        table_name = 'film_belonging'
+        dao_class = CommonDao
+        cache_conditions = {
+            'film_id': 3600 * 24
+        }
+
+
 class Folder(Model):
     folder_id = IntField(db_column='id', primary_key=True, auto_increment=True)
     name = StrField(db_column='name', default='新建文件夹', max_length=255)
@@ -128,9 +145,15 @@ def test_query_limit():
     print(folder.last())
 
 
+def test_query_isnull():
+    x = FilmDataObject.order_by(film_length__isnull=True)
+    print(x.first())
+
+
 if __name__ == '__main__':
-    # test_dump_new()
-    # test_update()
-    # test_delete()
+    test_dump_new()
+    test_update()
+    test_delete()
     test_query()
-    test_query_limit()
+    # test_query_limit()
+    # test_query_isnull()
