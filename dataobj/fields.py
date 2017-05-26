@@ -10,6 +10,7 @@ import decimal
 import datetime
 import json
 import pickle
+import logging
 
 from .exceptions import MissingColumnNameError, MissingFieldNameError
 from .converters import PyDatetimeConverter
@@ -18,6 +19,8 @@ from .validators import (TypeValidator, NotNullValidator,
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
+
+logger = logging.getLogger(__name__)
 
 
 class BaseField(object):
@@ -344,11 +347,25 @@ class _JsonSerializeDeserializeMixin(object):
     """
 
     def validate_input(self, value):
-        return json.dumps(super().validate_input(value), ensure_ascii=False,
-                          default=self._json_dumps_default)
+        if value is None:
+            return None
+
+        try:
+            return json.dumps(super().validate_input(value), ensure_ascii=False,
+                              default=self._json_dumps_default)
+        except ValueError:
+            logger.error('Invalid value {}, unable to serialize it with JSON encoder'.format(value))
+            raise
 
     def validate_output(self, value):
-        return super().validate_output(json.loads(value))
+        if value is None:
+            return None
+
+        try:
+            return super().validate_output(json.loads(value))
+        except ValueError:
+            logger.error("Invalid value {}, unable to deserialize it with JSON decoder".format(value))
+            raise
 
 
 class ListField(_JsonSerializeDeserializeMixin, BaseField):
