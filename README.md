@@ -108,6 +108,16 @@ f = Folder.objects.filter(folder_id__lte=2)
 
 # 查找 id 不等于某个值的文件夹
 f = Folder.objects.filter(folder_id__ne=2)
+
+# 查找所有 Folder
+folders = list(Folder.objects.all())
+
+# 排序过滤
+folders = list(Folder.objects.all().order_by("folder_id", descending=False).limit(10))
+
+# 切片访问
+for x in Folder.objects.filter(folder_name__isnull=False).order_by("folder_id")[10:]:
+    print(x)
 ```
 
 # Reflector 使用说明
