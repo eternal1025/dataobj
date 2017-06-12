@@ -31,7 +31,8 @@ class SQLArgsBuilder(object):
         for key, value in self._kwargs.items():
             try:
                 if isinstance(value, str):
-                    value = [value]
+                    value = value.split(',')
+                    value = [x.strip() for x in value if x.strip()]
                 else:
                     iter(value)
             except TypeError:
