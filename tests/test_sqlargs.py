@@ -6,6 +6,7 @@
 # Version: 0.0.1
 # Description: description of this file.
 
+import pandas as pd
 from dataobj.sqlargs import SQLArgsBuilder
 
 folder_fields = ['name', 'size']
@@ -18,6 +19,7 @@ row = {
 condition = {
     'name__contains': 'demo'
 }
+PROD_SAFE_DB_URI = 'mysql://zhangwenchen:m32hyAq23@192.168.2.235:3306/safe_db?charset=utf8'
 
 
 def test_select_sql():
@@ -54,12 +56,24 @@ def test_sql_conditions():
     print(SQLArgsBuilder('folder', where={'size__isnull': True, 'name__isnull': False}))
 
 
+def test_group_by():
+    sql, args = SQLArgsBuilder('sum_film_ci_day_time_slice_box_peoples_sessions',
+                               select='area_id, true_sessionDate, SUM(sessions) AS sessions',
+                               where={'film_belong_id': 5239},
+                               group_by='area_id, true_sessionDate',
+                               limit=1000,
+                               descending_order_by='sessions').sql_args
+    print(sql)
+    print(pd.read_sql(sql, PROD_SAFE_DB_URI, params=args))
+
+
 def main():
-    test_select_sql()
-    test_insert_sql()
-    test_update_sql()
-    test_delete_sql()
-    test_sql_conditions()
+    # test_select_sql()
+    # test_insert_sql()
+    # test_update_sql()
+    # test_delete_sql()
+    # test_sql_conditions()
+    test_group_by()
 
 
 if __name__ == '__main__':
