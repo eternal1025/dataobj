@@ -146,7 +146,7 @@ def test_query_limit():
 
 
 def test_query_isnull():
-    x = FilmDataObject.order_by(film_length__isnull=True)
+    x = FilmDataObject.objects(film_length__isnull=True)
     print(x.first())
 
 
@@ -155,5 +155,5 @@ if __name__ == '__main__':
     test_update()
     test_delete()
     test_query()
-    # test_query_limit()
-    # test_query_isnull()
+    test_query_limit()
+    test_query_isnull()

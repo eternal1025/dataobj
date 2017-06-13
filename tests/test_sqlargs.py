@@ -58,11 +58,11 @@ def test_sql_conditions():
 
 def test_group_by():
     sql, args = SQLArgsBuilder('sum_film_ci_day_time_slice_box_peoples_sessions',
-                               select='area_id, true_sessionDate, SUM(sessions) AS sessions',
-                               where={'film_belong_id': 5239},
+                               select='area_id, true_sessionDate, SUM(sessions) AS sessions, film_belong_id',
+                               where={'film_belong_id__range': (5000, 5010)},
                                group_by='area_id, true_sessionDate',
                                limit=1000,
-                               descending_order_by='sessions').sql_args
+                               descending_order_by='film_belong_id').sql_args
     print(sql)
     print(pd.read_sql(sql, PROD_SAFE_DB_URI, params=args))
 

@@ -76,7 +76,7 @@ if __name__ == '__main__':
     }
 
     condition = {
-        'name__startswith': 'c'
+        'age__range': (100, 200)
     }
 
     builder = SQLArgsBuilder('test', select=data, where=condition, descending_order_by='xyz', limit=(1, 10))

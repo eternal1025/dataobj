@@ -68,8 +68,14 @@ class SQLArgsFactory(object):
     def _where(self):
         salt = get_random_salt()
         if self._kwargs:
-            args = {'cond_{}_{}'.format(k, salt): v for k, v in self._kwargs.items()}
-            conditions = ['{}'.format(SQLCondition(key, value, salt).sql) for key, value in self._kwargs.items()]
+            args = {}
+            conditions = []
+
+            for key, value in self._kwargs.items():
+                cond = SQLCondition(key, value, salt)
+                args.update(cond.args)
+                conditions.append(cond.sql)
+
             return ' WHERE {}'.format(
                 ' AND '.join(sorted(conditions))), args
         else:
@@ -85,8 +91,14 @@ class SQLArgsFactory(object):
     def _having(self):
         salt = get_random_salt()
         if self._kwargs:
-            args = {'cond_{}_{}'.format(k, salt): v for k, v in self._kwargs.items()}
-            conditions = ['{}'.format(SQLCondition(key, value, salt).sql) for key, value in self._kwargs.items()]
+            args = {}
+            conditions = []
+
+            for key, value in self._kwargs.items():
+                cond = SQLCondition(key, value, salt)
+                args.update(cond.args)
+                conditions.append(cond.sql)
+
             return ' HAVING {}'.join(sorted(conditions)), args
         else:
             return ''
