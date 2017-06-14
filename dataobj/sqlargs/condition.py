@@ -34,7 +34,7 @@ class SQLCondition(object):
         'gte': lambda _: '{field} >= %(cond_{key}_{salt})s',
         'ne': lambda _: '{field} != %(cond_{key}_{salt})s',
         'in': lambda kinds: '{field} IN ' +
-                            '({})'.format(', '.join('%(cond_{key}_' + str(v) + '_{salt})s' for v in list(kinds))),
+                            '({})'.format(', '.join('%(cond_{key}_' + str(v) + '_{salt})s' for v in kinds)),
         'range': lambda _: '{field} BETWEEN %(cond_{key}_from_{salt})s AND %(cond_{key}_to_{salt})s',
         'contains': lambda _: '{field} LIKE CONCAT("%%", %(cond_{key}_{salt})s, "%%")',
         'startswith': lambda _: '{field} LIKE CONCAT(%(cond_{key}_{salt})s, "%%")',
@@ -111,6 +111,6 @@ if __name__ == '__main__':
     # exp = parser.parse('a__endswith')
     # print(exp)
     # print(exp % {'a': 'hello, world'})
-    condition = SQLCondition('a__in', {1, 3, 4})
+    condition = SQLCondition('a__in', [x for x in range(2)])
     print(condition)
     print(condition.args)
