@@ -6,7 +6,6 @@
 # Version: 0.0.1
 # Description: description of this file.
 
-
 __version__ = '0.0.1'
 __author__ = 'Chris'
 
@@ -34,6 +33,8 @@ class SQLCondition(object):
         'lte': lambda _: '{field} <= %(cond_{key}_{salt})s',
         'gte': lambda _: '{field} >= %(cond_{key}_{salt})s',
         'ne': lambda _: '{field} != %(cond_{key}_{salt})s',
+        'in': lambda kinds: '{field} IN ' +
+                            '({})'.format(', '.join('%(cond_{key}_' + str(v) + '_{salt})s' for v in list(kinds))),
         'range': lambda _: '{field} BETWEEN %(cond_{key}_from_{salt})s AND %(cond_{key}_to_{salt})s',
         'contains': lambda _: '{field} LIKE CONCAT("%%", %(cond_{key}_{salt})s, "%%")',
         'startswith': lambda _: '{field} LIKE CONCAT(%(cond_{key}_{salt})s, "%%")',
@@ -77,6 +78,8 @@ class SQLCondition(object):
         if self.condition == 'range':
             return {'cond_{}_from_{}'.format(self._key, self._salt): self._value[0],
                     'cond_{}_to_{}'.format(self._key, self._salt): self._value[1]}
+        if self.condition == 'in':
+            return {'cond_{}_{}_{}'.format(self._key, v, self._salt): str(v) for v in self._value}
 
         return {'cond_{}_{}'.format(self._key, self._salt): self._value}
 
@@ -108,6 +111,6 @@ if __name__ == '__main__':
     # exp = parser.parse('a__endswith')
     # print(exp)
     # print(exp % {'a': 'hello, world'})
-    condition = SQLCondition('a__startswith', 'Hello')
+    condition = SQLCondition('a__in', {1, 3, 4})
     print(condition)
     print(condition.args)
