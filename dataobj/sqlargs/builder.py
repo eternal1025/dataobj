@@ -5,6 +5,7 @@
 # Date   : 2017-02-27 11-05
 # Version: 0.0.1
 # Description: simple sql builder.
+
 from pprint import pformat
 
 from dataobj.sqlargs.sql_factory import SQLArgsFactory

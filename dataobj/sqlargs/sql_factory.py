@@ -6,7 +6,6 @@
 # Version: 0.0.1
 # Description: simple sql factories
 
-
 from dataobj.sqlargs.condition import SQLCondition
 from dataobj.utils import get_random_salt
 
