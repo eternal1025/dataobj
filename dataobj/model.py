@@ -12,9 +12,9 @@ from pprint import pformat
 from .exceptions import DuplicatePrimaryKeyError, PrimaryKeyNotFoundError
 from .fields import *
 from .manager import DataObjectsManager
-from .utils import camel_to_underscore, validate_dao_class
+from .utils import camel_to_underscore
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('dataobj')
 
 __version__ = '0.0.1'
 __author__ = 'Chris'
@@ -39,13 +39,6 @@ class ModelMeta(type):
                 return type.__new__(mcs, name, bases, attributes)
         except:
             pass
-
-        # Load dao class first
-        try:
-            dao_class = attributes.get('Meta').dao_class
-            validate_dao_class(dao_class)
-        except AttributeError:
-            raise RuntimeError('Missing dao_class attribute in Meta class, please define it first')
 
         table_name = mcs.get_table_name(name, attributes)
 
@@ -81,7 +74,13 @@ class ModelMeta(type):
         attributes['__db_mappings__'] = {f.db_column: f for f in mappings.values()}
         attributes['__primary_field__'] = primary_field
         attributes['__table_name__'] = table_name
-        attributes['__dao_class__'] = dao_class
+        # Connection could be a config with dict type or a server url,
+        #  or a callable object that creates a database config,
+        # or a object which implements the interfaces defined in `dbutil.connections.IDatabaseConnection`.
+        try:
+            attributes['__connection__'] = getattr(attributes.get('Meta'), 'connection')
+        except AttributeError:
+            attributes['__connection__'] = None
 
         # Remove fields from attributes
         for key in mappings:
@@ -228,26 +227,26 @@ class Model(metaclass=ModelMeta):
     def dict_data(self):
         return {k: getattr(self, k) for k in self.__mappings__}
 
-    def dump(self):
+    def dump(self, conn=None):
         """
         Insert it to the database
         """
-        return self.objects.dump(self)
+        return self.objects.dump(self, conn)
 
-    def update(self, **kwargs):
+    def update(self, conn=None, **kwargs):
         """
         Update a model instance and save it to the database
         """
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        return self.objects.update(self)
+        return self.objects.update(self, conn)
 
-    def delete(self):
+    def delete(self, conn=None):
         """
         Delete a model instance
         """
-        if self.objects.delete(self) is True:
+        if self.objects.delete(self, conn) is True:
             # Clear all the existing values in the model instance
             self.__dict__.clear()
             return True

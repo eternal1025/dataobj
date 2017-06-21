@@ -10,12 +10,13 @@ import logging
 import pickle
 
 import copy
-from .sqlargs import SQLArgsBuilder, SQLCondition
+from dbutil import ConnectionRouter
+from dbutil.sqlargs import SQLCondition
 
 __version__ = '0.0.2'
 __author__ = 'Chris'
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('dataobj')
 
 
 class DataObjectsManager(object):
@@ -42,8 +43,9 @@ class DataObjectsManager(object):
         # Temporary inner cache to hold some query results for a while
         self._query_results_cache = None
         self._return_raw_data = False
+        self._custom_conn = None
 
-    def get(self, **conditions):
+    def get(self, conn=None, **conditions):
         """
         Get a single item with the given conditions
         Shortcut of the query syntax: "model.objects.filter(conditions).first()"
@@ -54,18 +56,18 @@ class DataObjectsManager(object):
         >>> result = model.objects.get(id=10)
         >>> print(result)
         """
-        return self.filter(**conditions).first()
+        return self.filter(conn=conn, **conditions).first()
 
-    def all(self):
+    def all(self, conn=None):
         """
         Get all the data objects (model instances)
 
         Usage:
         >>> results = model.objects.all()
         """
-        return self.filter()
+        return self.filter(conn)
 
-    def filter(self, **conditions):
+    def filter(self, conn=None, **conditions):
         """
         Filter with the given conditions
 
@@ -76,18 +78,20 @@ class DataObjectsManager(object):
         >>> results[:10]
         >>> results[4]
         """
+        self._custom_conn = conn
         o = copy.deepcopy(self)
         o._query_collector['select'] = list(self._model.__mappings__.keys())
         o._query_collector['where'] = conditions
         o._return_raw_data = False
         return o
 
-    def filter_with_field_names(self, *field_names, **conditions):
+    def filter_with_field_names(self, conn=None, *field_names, **conditions):
         """
         Filter specific fields with the given conditions
 
         Return the original dict data fetched from database
         """
+        self._custom_conn = conn
         o = copy.deepcopy(self)
         o._query_collector['select'] = field_names
         o._query_collector['where'] = conditions
@@ -155,7 +159,7 @@ class DataObjectsManager(object):
         """For pickling attribute"""
         return '{}_pk'.format(model_instance.__class__.__name__)
 
-    def dump(self, model_instance):
+    def dump(self, model_instance, conn=None):
         """
         Insert the model instance to database immediately
         """
@@ -166,14 +170,16 @@ class DataObjectsManager(object):
             else model_instance.__mappings__.values()
 
         content = {field.db_column: model_instance.__dict__.get(field.field_name) for field in fields}
-        last_id = self._execute(*SQLArgsBuilder(self._model.__table_name__,
-                                                insert=content).sql_args)
-
-        if primary_field.auto_increment is True:
-            setattr(model_instance, primary_field.field_name, last_id)
-            setattr(model_instance, self._get_pk_name(model_instance), pickle.dumps(model_instance))
-
-        return True
+        result = self._execute(self._model.__table_name__, conn, insert=content)
+        if result:
+            last_id = result[-1]
+            if primary_field.auto_increment is True:
+                setattr(model_instance, primary_field.field_name, last_id)
+                setattr(model_instance, self._get_pk_name(model_instance), pickle.dumps(model_instance))
+            return True
+        else:
+            logger.error('Error happened during dumping')
+            return False
 
     def _collect_updated_content(self, model_instance):
         """Only fields that were updated with new values will be updated into database"""
@@ -192,7 +198,7 @@ class DataObjectsManager(object):
 
             return content
 
-    def update(self, model_instance):
+    def update(self, model_instance, conn=None):
         """
         Update the model instance in database
         """
@@ -205,9 +211,9 @@ class DataObjectsManager(object):
 
         logger.debug('Update model "{}" with content "{}"'.format(model_instance.__class__.__name__, content))
         where = {primary_field.db_column: value_of_primary_key}
-        result = self._execute(*SQLArgsBuilder(self._model.__table_name__,
-                                               update=content,
-                                               where=where).sql_args)
+        result = self._execute(self._model.__table_name__,
+                               conn,
+                               update=content, where=where)
         if result is None:
             return False
         else:
@@ -215,27 +221,27 @@ class DataObjectsManager(object):
 
         return True
 
-    def delete(self, model_instance):
+    def delete(self, model_instance, conn=None):
         """
         Delete the model instance from database
         """
         primary_field = model_instance.__primary_field__
         value_of_primary_key = model_instance.__dict__.get(primary_field.field_name)
 
-        result = self._execute(*SQLArgsBuilder(self._model.__table_name__,
-                                               delete='',
-                                               where={primary_field.db_column: value_of_primary_key}).sql_args)
+        result = self._execute(self._model.__table_name__,
+                               conn,
+                               delete='',
+                               where={primary_field.db_column: value_of_primary_key})
         return True if result is not None else False
 
-    def count(self):
+    def count(self, conn=None):
         """
         Count how many rows in a table
 
         # TO-DO: extend sqlargs package to support MYSQL FUNCTIONS
         """
-        sql = "SELECT COUNT(1) AS cnt FROM {}".format(self._model.__table_name__)
         try:
-            return self._query(sql, None)[0].get('cnt')
+            return self._query(self._model.__table_name__, conn, select=['COUNT(1) AS cnt'])[0].get('cnt')
         except Exception as err:
             logger.error(err)
             return -1
@@ -246,20 +252,20 @@ class DataObjectsManager(object):
         """
         if self._query_results_cache is None:
             if self._return_raw_data is True:
-                self._query_results_cache = list(self._select_now())
+                self._query_results_cache = list(self._select_now(self._custom_conn))
             else:
-                self._query_results_cache = list(self._iter_objects())
+                self._query_results_cache = list(self._iter_objects(self._custom_conn))
 
-    def _iter_objects(self):
+    def _iter_objects(self, conn=None):
         """
         Generate model objects from query results
         """
-        for row in self._select_now():
+        for row in self._select_now(conn):
             o = self._model(**row)
             setattr(o, self._get_pk_name(o), pickle.dumps(o))
             yield o
 
-    def _select_now(self):
+    def _select_now(self, conn=None):
         """
         Now execute the collected queries and return the query results
         """
@@ -303,39 +309,57 @@ class DataObjectsManager(object):
         else:
             kwargs['ascending_order_by'] = order_by_columns
 
-        sql, args = SQLArgsBuilder(self._model.__table_name__,
-                                   **kwargs).sql_args
-
         # Translate column to real field names
-        for row in self._query(sql, args):
+        for row in self._query(self._model.__table_name__, conn, **kwargs):
             converted_row = {}
             for column, value in row.items():
                 model_field = self._model.__db_mappings__.get(column)
 
                 if model_field:
                     converted_row[model_field.field_name] = model_field.validate_output(value)
+
             yield converted_row
 
-    def _execute(self, sql, args):
-        """
-        Execute method to proxy the real db operation to the dao_class
-        """
-        # print('Execute sql "{}" with args "{}"'.format(sql, args))
-        logger.debug('Execute sql "{}" with args "{}"'.format(sql, args))
+        self._custom_conn = None
 
+    def _execute(self, table, conn=None, **kwargs):
+        conn = self._connection_router(conn)
         try:
-            # Return the last row id
-            return self._model.__dao_class__().execute(sql, args)
-        except AttributeError:
-            logger.warning('Dao class for model "{}" has no method "execute(sql, args)"'.format(self._model.__name__))
+            return conn.execute(table, **kwargs)
+        except Exception as err:
+            raise err
+        finally:
+            try:
+                conn.close()
+            except AttributeError:
+                pass
 
-    def _query(self, sql, args):
-        """
-        Query method to proxy the real db operation to the dao_class
-        """
-        # print('Query sql "{}" with args "{}"'.format(sql, args))
-        logger.debug('Query sql "{}" with args "{}"'.format(sql, args))
-        return self._model.__dao_class__().query(sql, args) or []
+    def _query(self, table, conn=None, **kwargs):
+        conn = self._connection_router(conn)
+        try:
+            return conn.query(table, **kwargs)
+        except Exception as err:
+            raise err
+        finally:
+            try:
+                conn.close()
+            except AttributeError:
+                pass
+
+    def _connection_router(self, conn):
+        conn = conn or self._model.__connection__
+
+        if callable(conn):
+            conn = conn()
+
+        if isinstance(conn, dict):
+            return ConnectionRouter(**conn)
+        elif isinstance(conn, str):
+            return ConnectionRouter(conn)
+        else:
+            if hasattr(conn, 'execute') and hasattr(conn, 'query'):
+                return conn
+            raise RuntimeError("Connection is not properly configured")
 
     #############################
     # Python's special methods  #
