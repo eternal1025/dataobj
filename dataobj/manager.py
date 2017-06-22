@@ -241,7 +241,7 @@ class DataObjectsManager(object):
         # TO-DO: extend sqlargs package to support MYSQL FUNCTIONS
         """
         try:
-            return self._query(self._model.__table_name__, conn, select=['COUNT(1) AS cnt'])[0].get('cnt')
+            return list(self._query(self._model.__table_name__, conn, select=['COUNT(1) AS cnt']))[0].get('cnt')
         except Exception as err:
             logger.error(err)
             return -1
