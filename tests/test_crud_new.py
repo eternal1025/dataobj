@@ -30,18 +30,22 @@ class User(Model):
 
     class Meta:
         table_name = 'user'
-        connection = ConnectionRouter(**db_config)
+        connection = ConnectionRouter(db_config)
 
 
 def test_insert(conn):
-    user = User(name='Chris', age=20)
-    print('新增：', user.dump(conn))
-    print(user)
+    names = 'Chris Mike Pike'.split()
+    ages = '20 30 40'.split()
+
+    for name, age in zip(names, ages):
+        user = User(name=name, age=age)
+        print('新增：', user.dump(conn))
+        print(user)
 
 
 def test_delete(conn):
     print('删除')
-    for _ in range(10):
+    for _ in range(User.objects.count()):
         User.objects.all(conn).first().delete()
 
 
@@ -58,10 +62,10 @@ def test_update(conn):
 
 
 def test_crud(conn):
-    test_query(conn)
     test_insert(conn)
-    test_delete(conn)
     test_update(conn)
+    test_query(conn)
+    test_delete(conn)
 
 
 if __name__ == '__main__':

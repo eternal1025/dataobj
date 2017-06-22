@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='dataobj',
-    version='2.3',
+    version='2.4',
     packages=['dataobj', 'dataobj.validators'],
     url='',
     license='Apache',

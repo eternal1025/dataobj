@@ -323,7 +323,12 @@ class DataObjectsManager(object):
         self._custom_conn = None
 
     def _execute(self, table, conn=None, **kwargs):
-        conn = self._connection_router(conn)
+        conn = self._get_connection(conn)
+        try:
+            conn.open()
+        except AttributeError:
+            pass
+
         try:
             return conn.execute(table, **kwargs)
         except Exception as err:
@@ -335,7 +340,12 @@ class DataObjectsManager(object):
                 pass
 
     def _query(self, table, conn=None, **kwargs):
-        conn = self._connection_router(conn)
+        conn = self._get_connection(conn)
+        try:
+            conn.open()
+        except AttributeError:
+            pass
+
         try:
             return conn.query(table, **kwargs)
         except Exception as err:
@@ -346,15 +356,13 @@ class DataObjectsManager(object):
             except AttributeError:
                 pass
 
-    def _connection_router(self, conn):
+    def _get_connection(self, conn):
         conn = conn or self._model.__connection__
 
         if callable(conn):
             conn = conn()
 
-        if isinstance(conn, dict):
-            return ConnectionRouter(**conn)
-        elif isinstance(conn, str):
+        if isinstance(conn, (dict, str)):
             return ConnectionRouter(conn)
         else:
             if hasattr(conn, 'execute') and hasattr(conn, 'query'):
