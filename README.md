@@ -22,30 +22,30 @@
 ## 定义 Model
 
 定义 Model 的方式比较简单，继承自 `dataobj.Model` 并添加一系列字段即可：
+
+```python
+import datetime
+from dataobj import Model, IntField, StrField, DatetimeField
     
-    ```python
-    import datetime
-    from dataobj import Model, IntField, StrField, DatetimeField
-    
-    class User(Model):
-        # 每个 Model 和数据库表关联，必须要指定一个唯一的 field 作为主键
-        id = IntField(primary_key=True)
-        name = StrField(not_null=True)
-        age = IntField()
-        # 当然也设定默认值
-        email = StrField(default='example@hostname')
-        # 可以给字段加别名，db_column 就是在数据库中的名称
-        address = StrField(db_column='addr')
-        # 默认值也可以是一个 callable 对象
-        register_at = DatetimeField(default=datetime.datetime.now)
+class User(Model):
+    # 每个 Model 和数据库表关联，必须要指定一个唯一的 field 作为主键
+    id = IntField(primary_key=True)
+    name = StrField(not_null=True)
+    age = IntField()
+    # 当然也设定默认值
+    email = StrField(default='example@hostname')
+    # 可以给字段加别名，db_column 就是在数据库中的名称
+    address = StrField(db_column='addr')
+    # 默认值也可以是一个 callable 对象
+    register_at = DatetimeField(default=datetime.datetime.now)
         
-        class Meta:
-            # 在此指定关联的表名，如果没有指定，则默认为 `User` 类名
-            table_name = 'user'
-            # 此处指定数据库连接器配置，关于该配置，参见后面一节的说明
-            connection = 'some_connection'
+    class Meta:
+        # 在此指定关联的表名，如果没有指定，则默认为 `User` 类名
+        table_name = 'user'
+        # 此处指定数据库连接器配置，关于该配置，参见后面一节的说明
+        connection = 'some_connection'
     
-    ```
+```
 
 ## 配置数据库连接
 
@@ -165,38 +165,6 @@
     # 删除最后一条记录
     user = User.objects.all().order_by('id', descending=True).limit(1).first()
     user.delete()
-    ```
-
-
-# Reflector 使用说明
-使用 Reflector 可以非常轻松地完成对一个表的自动映射，从而快速编写 Model，没必要再做繁杂的转换和敲键盘的工作了。
-使用方式非常简单，如下：
-
-    ```python
-    from dataobj.reflector import MySQLTableReflector
-    
-    print(r.reflect('app', 'AppDataObject', introduction='intro'))
-   
-    # 得到下面的输出：
-    class AppDataObject(Model):
-        id = IntField(auto_increment=True, max_length=11, not_null=True, primary_key=True)
-        name = StrField(max_length=255)
-        introduction = StrField(db_column='intro')
-        icon_url = StrField(max_length=255)
-        width = IntField(max_length=11)
-        height = IntField(max_length=11)
-        type = StrField(max_length=255)
-        is_resizeable = IntField(max_length=1)
-        has_toolbar = IntField(max_length=1)
-        is_flash = IntField(max_length=1)
-        usage_number = IntField(max_length=11)
-        create_at = DatetimeField()
-        category = StrField(max_length=255)
-        developer = StrField(max_length=255)
-        score = IntField(max_length=11)
-        scoring_at = DatetimeField()
-        app_url = StrField(max_length=255)
-        access_level = IntField(max_length=4)
     ```
 
 # 更新日志
