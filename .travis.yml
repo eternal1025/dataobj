@@ -9,4 +9,4 @@ install:
   - pip install pandas
   - pip install pymysql
 
-script: pytest
+script: python -m pytest -v

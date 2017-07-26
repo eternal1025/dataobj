@@ -1,5 +1,8 @@
-# 说明
-`dataobj` 是一个简易、轻量的 ORM 工具包，提供简单易用的接口，方便执行增删改查等常见的操作。
+关于 dataobj 包
+----------------------
+![travis_status](https://travis-ci.org/0xE8551CCB/dataobj.svg?branch=master)
+
+[dataobj](https://github.com/0xE8551CCB/dataobj) 是一个简易、轻量的 ORM 工具包，提供简单易用的接口，方便执行增删改查等常见的操作。
 
 # 功能
 1. 提供了 `Model` 和 `Field` 对象，对数据层包装并数据的合法性校验；
