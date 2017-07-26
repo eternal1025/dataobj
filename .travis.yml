@@ -6,7 +6,7 @@ python:
 
 # Install some dependencies
 install:
-  - pip install pandas
-  - pip install pymysql
+  - bash .travis/install.sh
 
-script: python -m pytest -v tests
+script:
+  - bash .travis/run.sh
