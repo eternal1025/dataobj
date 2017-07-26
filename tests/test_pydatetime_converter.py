@@ -75,7 +75,7 @@ def test_convert_to_time_ok(converter, tm, wanted):
                              'bar'
                          ])
 def test_convert_failed_invalid_conversion_type(converter, tp):
-    with pytest.raises(ValueError, match='Unsupported datetime factory'):
+    with pytest.raises(ValueError):
         converter.convert("2012-12-12", tp)
 
 
@@ -86,5 +86,5 @@ def test_convert_failed_invalid_conversion_type(converter, tp):
                              '27:34'
                          ])
 def test_convert_failed_invalid_time_format_etc(converter, tm):
-    with pytest.raises(ValueError, match='Unsupported type for PyDateTimeConverter'):
+    with pytest.raises(ValueError):
         converter.convert(tm, 'datetime')
