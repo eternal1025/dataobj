@@ -159,3 +159,8 @@ class TestLengthValidator(object):
         # 5 <= len <= 12
         validator = LengthValidator(min_length=5, max_length=12, error_handler=err_handler)
         validator.validate('value', value)
+
+
+class TestNotNullValidator(object):
+    def test_validate_ok(self):
+        pass
